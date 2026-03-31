@@ -1,8 +1,18 @@
-import type { Lesson, Partie, Word } from '../types';
+import type { Lesson, Partie, Word, Exercise } from '../types';
 
 let wordId = 1;
 function w(arabic: string, transliteration: string, meaningFr: string): Word {
   return { id: wordId++, arabic, transliteration, meaningFr };
+}
+
+function makeExercises(lessonId: number): Exercise[] {
+  return [
+    { id: `${lessonId}-discover`, lessonId, type: 'discover', title: 'Découverte', description: 'Apprends les mots avec des flashcards' },
+    { id: `${lessonId}-quiz`, lessonId, type: 'quiz', title: 'Quiz', description: 'Trouve la traduction du mot arabe' },
+    { id: `${lessonId}-match`, lessonId, type: 'match', title: 'Association', description: 'Relie les paires arabe ↔ français' },
+    { id: `${lessonId}-write`, lessonId, type: 'write', title: 'Écriture', description: 'Trouve la bonne translitération' },
+    { id: `${lessonId}-master`, lessonId, type: 'master', title: 'Maîtrise', description: 'Trouve le mot arabe depuis le français' },
+  ];
 }
 
 const lesson1: Lesson = {
@@ -10,6 +20,7 @@ const lesson1: Lesson = {
   title: 'Pronoms démonstratifs et relatifs',
   partieId: 1,
   icon: '👆',
+  exercises: makeExercises(1),
   words: [
     w('أُولَٰئِكَ / أُولَٰئِكُم / أُولَاءِ', 'ulāʾika / ulāʾikum / ulāʾa', 'ceux‑là, celles‑là, ces'),
     w('الَّتِي', 'allatī', 'qui, laquelle, celle qui…'),
@@ -30,6 +41,7 @@ const lesson2: Lesson = {
   title: 'Forme négative, affirmative et d\'exclusion',
   partieId: 1,
   icon: '🚫',
+  exercises: makeExercises(2),
   words: [
     w('إِلَّا ٱللَّهَ', 'illā Allah', 'Excepté Allah'),
     w('بَلَى', 'balā', 'Bien sûr, certainement, mais oui !'),
@@ -51,6 +63,7 @@ const lesson3: Lesson = {
   title: 'À qui appartient ? Pronoms connectés',
   partieId: 1,
   icon: '🔗',
+  exercises: makeExercises(3),
   words: [
     w('…كَ', '…ka', 'Ton, ta, te (masculin singulier)'),
     w('…كِ', '…ki', 'Ton, ta, te (féminin singulier)'),
@@ -71,6 +84,7 @@ const lesson4: Lesson = {
   title: 'Qui ? Pronoms déconnectés',
   partieId: 1,
   icon: '🙋',
+  exercises: makeExercises(4),
   words: [
     w('أَنَا', 'anā', 'Je / Moi'),
     w('أَنْتَ', 'anta', 'Vous (masculin singulier)'),
@@ -91,6 +105,7 @@ const lesson5: Lesson = {
   title: 'Où ?',
   partieId: 1,
   icon: '📍',
+  exercises: makeExercises(5),
   words: [
     w('أمَام', 'amāma', 'Devant'),
     w('أَيْنَ', 'ayna', 'Où / où que'),
@@ -112,6 +127,7 @@ const lesson6: Lesson = {
   title: 'Question / Affirmation',
   partieId: 1,
   icon: '❓',
+  exercises: makeExercises(6),
   words: [
     w('أَ / هَلْ', 'a / hal', 'Est-ce que ?'),
     w('أَنَّى', 'annā', 'D\'où ? / Pourquoi ?'),
@@ -133,6 +149,7 @@ const lesson7: Lesson = {
   title: 'Détenteur de et autres mots',
   partieId: 1,
   icon: '👤',
+  exercises: makeExercises(7),
   words: [
     w('ذو (ذا، ذي)', 'dhū (dhā, dhī)', 'Qui a, détenteur de, doué de, doté de'),
     w('ذات', 'dhāt', 'Qui a, détentrice de, douée de, dotée de'),
@@ -154,6 +171,7 @@ const lesson8: Lesson = {
   title: 'Quand ? (temps et conjonctions)',
   partieId: 1,
   icon: '⏰',
+  exercises: makeExercises(8),
   words: [
     w('قبل', 'qabla', 'Avant'),
     w('بعد', 'ba\'da', 'Après'),
@@ -175,6 +193,7 @@ const lesson9: Lesson = {
   title: 'Prépositions et particules',
   partieId: 1,
   icon: '🔤',
+  exercises: makeExercises(9),
   words: [
     w('ب', 'bi', 'Avec, grâce à, à cause de, à l\'aide de'),
     w('عن', '\'an', 'À propos de'),
@@ -196,6 +215,7 @@ const lesson10: Lesson = {
   title: 'Préfixes verbaux et particules',
   partieId: 1,
   icon: '⚙️',
+  exercises: makeExercises(10),
   words: [
     w('قد (+ verbe au passé)', 'qad', 'Exprime la réalisation d\'une action déjà accomplie'),
     w('س (+ verbe au présent)', 'sa', 'Indique un futur proche'),

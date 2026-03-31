@@ -6,6 +6,9 @@ import Dashboard from './pages/Dashboard';
 import LessonDetail from './pages/LessonDetail';
 import Learn from './pages/Learn';
 import Quiz from './pages/Quiz';
+import Match from './pages/Match';
+import WriteExercise from './pages/WriteExercise';
+import Master from './pages/Master';
 import WordList from './pages/WordList';
 import { useProgress } from './hooks/useProgress';
 
@@ -49,6 +52,9 @@ function App() {
         <Route path="/lesson/:lessonId" element={<LessonDetail />} />
         <Route path="/learn/:lessonId" element={<Learn />} />
         <Route path="/quiz/:lessonId" element={<Quiz />} />
+        <Route path="/match/:lessonId" element={<Match />} />
+        <Route path="/write/:lessonId" element={<WriteExercise />} />
+        <Route path="/master/:lessonId" element={<Master />} />
         <Route path="/words" element={<WordList />} />
       </Routes>
     </AnimatePresence>

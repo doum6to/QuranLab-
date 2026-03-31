@@ -99,7 +99,7 @@ function ProgressBar({
 export default function Quiz() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
-  const { addXp, updateStreak, updateWordProgress, markLessonComplete } = useProgress();
+  const { addXp, updateStreak, updateWordProgress, markLessonComplete, markExerciseComplete } = useProgress();
 
   const lesson = useMemo(() => getLessonById(Number(lessonId)), [lessonId]);
   const allWords = useMemo(() => getAllWords(), []);
@@ -147,13 +147,14 @@ export default function Quiz() {
     if (nextIndex >= questions.length) {
       if (lesson) {
         markLessonComplete(lesson.id);
+        markExerciseComplete(`${lesson.id}-quiz`);
       }
       setIsComplete(true);
     } else {
       setCurrentIndex(nextIndex);
       setSelectedAnswer(null);
     }
-  }, [currentIndex, questions.length, lesson, markLessonComplete]);
+  }, [currentIndex, questions.length, lesson, markLessonComplete, markExerciseComplete]);
 
   const handleClose = useCallback(() => {
     navigate(-1);

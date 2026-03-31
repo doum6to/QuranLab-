@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { UserProgress, WordProgress, Lesson } from '../types';
+import type { UserProgress, WordProgress, Lesson, ExerciseType } from '../types';
 
 const STORAGE_KEY = 'quranlab-progress';
 
@@ -13,6 +13,7 @@ const defaultProgress: UserProgress = {
   studyTime: '',
   wordProgress: {},
   completedLessons: [],
+  completedExercises: [],
 };
 
 function loadProgress(): UserProgress {
@@ -34,6 +35,8 @@ function saveProgress(progress: UserProgress): void {
     // Storage full or unavailable
   }
 }
+
+const exerciseOrder: ExerciseType[] = ['discover', 'quiz', 'match', 'write', 'master'];
 
 export function useProgress() {
   const [progress, setProgress] = useState<UserProgress>(loadProgress);
@@ -135,6 +138,44 @@ export function useProgress() {
     });
   }, []);
 
+  const markExerciseComplete = useCallback((exerciseId: string) => {
+    setProgress((prev) => {
+      if (prev.completedExercises.includes(exerciseId)) return prev;
+      return {
+        ...prev,
+        completedExercises: [...prev.completedExercises, exerciseId],
+      };
+    });
+  }, []);
+
+  const isExerciseUnlocked = useCallback(
+    (lessonId: number, exerciseType: ExerciseType): boolean => {
+      const typeIndex = exerciseOrder.indexOf(exerciseType);
+      if (typeIndex === 0) return true; // discover is always unlocked
+      const prevType = exerciseOrder[typeIndex - 1];
+      const prevExerciseId = `${lessonId}-${prevType}`;
+      return progress.completedExercises.includes(prevExerciseId);
+    },
+    [progress.completedExercises]
+  );
+
+  const isExerciseCompleted = useCallback(
+    (exerciseId: string): boolean => {
+      return progress.completedExercises.includes(exerciseId);
+    },
+    [progress.completedExercises]
+  );
+
+  const getExerciseStatus = useCallback(
+    (lessonId: number, exerciseType: ExerciseType): 'completed' | 'active' | 'locked' => {
+      const exerciseId = `${lessonId}-${exerciseType}`;
+      if (progress.completedExercises.includes(exerciseId)) return 'completed';
+      if (isExerciseUnlocked(lessonId, exerciseType)) return 'active';
+      return 'locked';
+    },
+    [progress.completedExercises, isExerciseUnlocked]
+  );
+
   const isLessonComplete = useCallback(
     (lesson: Lesson): boolean => {
       return lesson.words.every((w) => progress.wordProgress[w.id] !== undefined);
@@ -166,6 +207,10 @@ export function useProgress() {
     addXp,
     updateStreak,
     markLessonComplete,
+    markExerciseComplete,
+    isExerciseUnlocked,
+    isExerciseCompleted,
+    getExerciseStatus,
     isLessonComplete,
     getLessonProgress,
     resetProgress,

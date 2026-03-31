@@ -5,12 +5,23 @@ export interface Word {
   meaningFr: string;
 }
 
+export type ExerciseType = 'discover' | 'quiz' | 'match' | 'write' | 'master';
+
+export interface Exercise {
+  id: string;
+  lessonId: number;
+  type: ExerciseType;
+  title: string;
+  description: string;
+}
+
 export interface Lesson {
   id: number;
   title: string;
   partieId: number;
   icon: string;
   words: Word[];
+  exercises: Exercise[];
 }
 
 export interface Partie {
@@ -41,6 +52,7 @@ export interface UserProgress {
   studyTime: string;
   wordProgress: Record<number, WordProgress>;
   completedLessons: number[];
+  completedExercises: string[];
 }
 
 export type QuizType = 'ar-to-fr' | 'fr-to-ar' | 'transliteration';

@@ -43,7 +43,7 @@ function XpBanner({ xp }: { xp: number }) {
 export default function Learn() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
-  const { progress, markWordLearned, addXp, updateStreak, markLessonComplete } =
+  const { progress, markWordLearned, addXp, updateStreak, markLessonComplete, markExerciseComplete } =
     useProgress();
 
   const lesson = getLessonById(Number(lessonId));
@@ -94,6 +94,9 @@ export default function Learn() {
             markLessonComplete(lesson.id);
           }
         }
+        if (lesson) {
+          markExerciseComplete(`${lesson.id}-discover`);
+        }
         setIsComplete(true);
       } else {
         setCurrentIndex(nextIndex);
@@ -110,6 +113,7 @@ export default function Learn() {
       addXp,
       updateStreak,
       markLessonComplete,
+      markExerciseComplete,
     ]
   );
 
