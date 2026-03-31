@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLessonById } from '../data/lessons';
@@ -14,44 +14,28 @@ const exerciseRoutes: Record<string, string> = {
   master: 'master',
 };
 
-// Zigzag positions: each node's horizontal offset (%) and which side the label goes
-const NODE_LAYOUT = [
+// Zigzag horizontal offsets for each node (% from left, subtle S-curve)
+const NODE_OFFSETS = [
+  { leftPct: 30, labelSide: 'right' as const },
+  { leftPct: 22, labelSide: 'right' as const },
+  { leftPct: 35, labelSide: 'right' as const },
+  { leftPct: 50, labelSide: 'left' as const },
   { leftPct: 32, labelSide: 'right' as const },
-  { leftPct: 20, labelSide: 'right' as const },
-  { leftPct: 42, labelSide: 'right' as const },
-  { leftPct: 60, labelSide: 'left' as const },
-  { leftPct: 40, labelSide: 'right' as const },
 ];
-
-const NODE_SPACING = 140; // vertical pixels between each node center
-const COIN_CENTER_OFFSET = 50; // roughly half the coin+rim height
 
 export default function LessonDetail() {
   const { lessonId } = useParams<{ lessonId: string }>();
   const navigate = useNavigate();
   const { progress, getExerciseStatus } = useProgress();
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
-  const pathRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(320);
 
   const lesson = getLessonById(Number(lessonId));
-
-  useEffect(() => {
-    if (pathRef.current) {
-      const update = () => setContainerWidth(pathRef.current?.clientWidth ?? 320);
-      update();
-      window.addEventListener('resize', update);
-      return () => window.removeEventListener('resize', update);
-    }
-  }, []);
 
   if (!lesson) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center px-6" style={{ background: '#16161a' }}>
         <p className="text-xl text-gray-400 mb-6">Leçon introuvable</p>
-        <button onClick={() => navigate('/dashboard')} className="btn-primary">
-          Retour
-        </button>
+        <button onClick={() => navigate('/dashboard')} className="btn-primary">Retour</button>
       </div>
     );
   }
@@ -68,16 +52,6 @@ export default function LessonDetail() {
   const selectedStatus = selectedExercise
     ? getExerciseStatus(lesson.id, selectedExercise.type)
     : null;
-
-  // Calculate node center positions for SVG paths
-  const getNodeCenter = (index: number) => {
-    const layout = NODE_LAYOUT[index % NODE_LAYOUT.length];
-    const x = (layout.leftPct / 100) * containerWidth;
-    const y = index * NODE_SPACING + COIN_CENTER_OFFSET;
-    return { x, y };
-  };
-
-  const totalHeight = lesson.exercises.length * NODE_SPACING;
 
   return (
     <div className="min-h-dvh flex flex-col" style={{ background: '#16161a' }}>
@@ -111,7 +85,7 @@ export default function LessonDetail() {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto pb-32">
         {/* Level card */}
-        <div className="px-4 sm:px-6 pt-4 pb-8">
+        <div className="px-4 sm:px-6 pt-4 pb-6">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -150,58 +124,20 @@ export default function LessonDetail() {
           </motion.div>
         </div>
 
-        {/* Exercise path — zigzag with SVG curves */}
+        {/* Exercise nodes — vertical stack with subtle zigzag offsets */}
         <div className="px-4 sm:px-6">
-          <div ref={pathRef} className="relative max-w-sm mx-auto" style={{ height: totalHeight }}>
-            {/* SVG connecting paths */}
-            <svg
-              className="absolute inset-0 w-full pointer-events-none"
-              style={{ height: totalHeight, zIndex: 0 }}
-              viewBox={`0 0 ${containerWidth} ${totalHeight}`}
-              preserveAspectRatio="xMidYMid meet"
-            >
-              {lesson.exercises.map((_, index) => {
-                if (index === lesson.exercises.length - 1) return null;
-
-                const from = getNodeCenter(index);
-                const to = getNodeCenter(index + 1);
-
-                // Quadratic Bézier: control point at midpoint Y, averaged X with slight offset
-                const cpX = (from.x + to.x) / 2;
-                const cpY = (from.y + to.y) / 2;
-
-                const currentStatus = getExerciseStatus(lesson.id, lesson.exercises[index].type);
-                const nextStatus = getExerciseStatus(lesson.id, lesson.exercises[index + 1].type);
-                const isActive = currentStatus === 'completed' && (nextStatus === 'active' || nextStatus === 'completed');
-
-                return (
-                  <path
-                    key={index}
-                    d={`M ${from.x} ${from.y + 40} Q ${cpX} ${cpY + 20}, ${to.x} ${to.y - 10}`}
-                    fill="none"
-                    stroke={isActive ? 'rgba(212,175,55,0.25)' : 'rgba(255,255,255,0.06)'}
-                    strokeWidth="2.5"
-                    strokeDasharray="6 5"
-                    strokeLinecap="round"
-                  />
-                );
-              })}
-            </svg>
-
-            {/* Exercise nodes — absolutely positioned */}
+          <div className="max-w-md mx-auto">
             {lesson.exercises.map((exercise, index) => {
-              const layout = NODE_LAYOUT[index % NODE_LAYOUT.length];
+              const layout = NODE_OFFSETS[index % NODE_OFFSETS.length];
               const status = getExerciseStatus(lesson.id, exercise.type);
-              const top = index * NODE_SPACING;
 
               return (
                 <div
                   key={exercise.id}
-                  className="absolute"
+                  className="relative"
                   style={{
-                    left: `${layout.leftPct}%`,
-                    top,
-                    transform: 'translateX(-40px)', // center the coin on the leftPct position
+                    paddingLeft: `${layout.leftPct}%`,
+                    marginBottom: index < lesson.exercises.length - 1 ? '32px' : '0',
                   }}
                 >
                   <ExerciseNode
