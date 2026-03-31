@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useProgress } from '../hooks/useProgress';
 import { parties, getAllLessons } from '../data/lessons';
 import type { Lesson } from '../types';
@@ -11,14 +11,13 @@ function useCurrentLesson() {
   const allLessons = getAllLessons();
 
   return useMemo(() => {
-    // Find first lesson that doesn't have all 5 exercises completed
     for (const lesson of allLessons) {
       const allDone = lesson.exercises.every((ex) =>
         progress.completedExercises.includes(ex.id)
       );
       if (!allDone) return lesson;
     }
-    return allLessons[0]; // fallback
+    return allLessons[0];
   }, [allLessons, progress.completedExercises]);
 }
 
@@ -38,8 +37,8 @@ function useCurrentExercise(lesson: Lesson) {
 // ── Streak Day Circles ──
 function StreakDays({ streak }: { streak: number }) {
   const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-  const today = new Date().getDay(); // 0=Sun
-  const todayIndex = today === 0 ? 6 : today - 1; // Convert to 0=Mon
+  const today = new Date().getDay();
+  const todayIndex = today === 0 ? 6 : today - 1;
 
   return (
     <div className="flex items-center gap-2.5">
@@ -134,7 +133,7 @@ function GreenCheck() {
   );
 }
 
-// ── Lesson Thumbnail (for carousel) ──
+// ── Lesson Thumbnail (for carousel / step indicators) ──
 function LessonThumb({
   lesson,
   isCurrent,
@@ -177,24 +176,124 @@ function LessonThumb({
   );
 }
 
+// ── Course Card (reusable for both desktop & mobile carousel) ──
+function CourseCard({
+  lesson,
+  onContinue,
+  progressMessage,
+}: {
+  lesson: Lesson;
+  onContinue: () => void;
+  progressMessage: string;
+}) {
+  const { progress } = useProgress();
+  const currentExercise = useCurrentExercise(lesson);
+  const completedCount = lesson.exercises.filter((ex) =>
+    progress.completedExercises.includes(ex.id)
+  ).length;
+
+  return (
+    <div
+      className="overflow-hidden"
+      style={{
+        borderRadius: 20,
+        border: '2px solid #E5E5E5',
+        boxShadow: '0px 2px 0px 0px #CCC',
+        background: '#fff',
+      }}
+    >
+      {/* Top section: title + illustration */}
+      <div
+        className="text-center px-6 pt-8 pb-6"
+        style={{
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFCF4 100%)',
+          minHeight: 320,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <h2 className="font-serif text-2xl font-bold text-black mb-1">
+          {lesson.title}
+        </h2>
+        <p
+          className="text-sm font-bold uppercase tracking-wider mb-8"
+          style={{ color: '#B78900', letterSpacing: '0.1em' }}
+        >
+          Niveau {lesson.id}
+        </p>
+
+        {/* Large lesson icon */}
+        <div className="text-8xl mb-8 select-none">
+          {lesson.icon}
+        </div>
+
+        {/* Mascot message */}
+        <div className="flex items-center gap-2 justify-center">
+          <div
+            className="w-6 h-6 rounded-md flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, #29CC57 0%, #009B2B 100%)',
+              transform: 'rotate(45deg)',
+            }}
+          >
+            <span className="text-white text-xs font-bold" style={{ transform: 'rotate(-45deg)' }}>
+              Q
+            </span>
+          </div>
+          <span className="text-sm font-medium" style={{ color: '#000' }}>
+            {progressMessage}
+          </span>
+        </div>
+      </div>
+
+      {/* Exercise progress row */}
+      <div
+        className="px-5 py-3 flex items-center gap-3"
+        style={{ borderTop: '1px solid #F2F2F2' }}
+      >
+        <SmallCoin completed={completedCount > 0} />
+        <span
+          className="flex-1 text-sm font-medium truncate"
+          style={{ color: '#808080' }}
+        >
+          {currentExercise.title}
+        </span>
+        {progress.completedExercises.includes(currentExercise.id) && (
+          <GreenCheck />
+        )}
+      </div>
+
+      {/* Continue button */}
+      <div className="px-5 pb-5 pt-2">
+        <button
+          onClick={onContinue}
+          className="w-full py-3.5 text-base font-bold transition-all active:scale-[0.98]"
+          style={{
+            borderRadius: 54,
+            background: '#F7C325',
+            color: '#5C4400',
+            boxShadow: '0px -4px 0px 0px rgba(146, 109, 0, 0.3) inset, 0px 2px 0px 0px rgba(146, 109, 0, 0.2)',
+          }}
+        >
+          Continuer
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Dashboard ──
 export default function Dashboard() {
   const navigate = useNavigate();
   const { progress, isLessonComplete } = useProgress();
 
   const currentLesson = useCurrentLesson();
-  const currentExercise = useCurrentExercise(currentLesson);
   const allLessons = getAllLessons();
 
-  const completedExercisesForLesson = currentLesson.exercises.filter((ex) =>
-    progress.completedExercises.includes(ex.id)
-  ).length;
-
-  const progressMessage = useMemo(() => {
-    if (progress.totalXp === 0) return 'Bismillah, c\'est parti !';
-    if (completedExercisesForLesson > 0) return 'Continue comme ça !';
-    return 'Prêt pour la suite ?';
-  }, [progress.totalXp, completedExercisesForLesson]);
+  // Selected lesson state — defaults to the auto-detected current lesson
+  const [selectedLesson, setSelectedLesson] = useState<Lesson>(currentLesson);
 
   const exerciseRoutes: Record<string, string> = {
     discover: 'learn',
@@ -203,6 +302,54 @@ export default function Dashboard() {
     write: 'write',
     master: 'master',
   };
+
+  const getProgressMessage = useCallback((lesson: Lesson) => {
+    const completedCount = lesson.exercises.filter((ex) =>
+      progress.completedExercises.includes(ex.id)
+    ).length;
+    if (progress.totalXp === 0) return 'Bismillah, c\'est parti !';
+    if (completedCount > 0) return 'Continue comme ça !';
+    return 'Prêt pour la suite ?';
+  }, [progress.completedExercises, progress.totalXp]);
+
+  const handleContinue = useCallback((lesson: Lesson) => {
+    const exercise = lesson.exercises.find(
+      (ex) => !progress.completedExercises.includes(ex.id)
+    ) || lesson.exercises[0];
+    const route = exerciseRoutes[exercise.type];
+    navigate(`/${route}/${lesson.id}`);
+  }, [progress.completedExercises, navigate, exerciseRoutes]);
+
+  // ── Mobile carousel scroll-snap logic ──
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const isScrolling = useRef(false);
+
+  // Scroll to selected lesson when changed via thumbnail click
+  useEffect(() => {
+    if (scrollRef.current && !isScrolling.current) {
+      const index = allLessons.findIndex((l) => l.id === selectedLesson.id);
+      scrollRef.current.scrollTo({
+        left: index * scrollRef.current.clientWidth,
+        behavior: 'smooth',
+      });
+    }
+  }, [selectedLesson.id, allLessons]);
+
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return;
+    isScrolling.current = true;
+    clearTimeout((handleScroll as any)._timeout);
+    (handleScroll as any)._timeout = setTimeout(() => {
+      if (!scrollRef.current) return;
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const index = Math.round(scrollLeft / clientWidth);
+      const clamped = Math.max(0, Math.min(index, allLessons.length - 1));
+      if (allLessons[clamped] && allLessons[clamped].id !== selectedLesson.id) {
+        setSelectedLesson(allLessons[clamped]);
+      }
+      isScrolling.current = false;
+    }, 100);
+  }, [allLessons, selectedLesson.id]);
 
   return (
     <div className="min-h-dvh bg-white flex flex-col">
@@ -324,137 +471,84 @@ export default function Dashboard() {
 
           {/* ── Right: Course Card + Carousel ── */}
           <main className="flex-1 flex flex-col items-center lg:pt-10 pb-20">
-            {/* Course Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="w-full"
-              style={{ maxWidth: 600 }}
-            >
+
+            {/* ══ MOBILE: Swipeable card carousel ══ */}
+            <div className="lg:hidden w-full" style={{ maxWidth: 600 }}>
               <div
-                className="overflow-hidden"
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="flex overflow-x-auto snap-x snap-mandatory"
                 style={{
-                  borderRadius: 20,
-                  border: '2px solid #E5E5E5',
-                  boxShadow: '0px 2px 0px 0px #CCC',
-                  background: '#fff',
+                  scrollbarWidth: 'none',
+                  WebkitOverflowScrolling: 'touch',
                 }}
               >
-                {/* Top section: title + illustration */}
-                <div
-                  className="text-center px-6 pt-8 pb-6"
-                  style={{
-                    background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFCF4 100%)',
-                    minHeight: 320,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <h2 className="font-serif text-2xl font-bold text-black mb-1">
-                    {currentLesson.title}
-                  </h2>
-                  <p
-                    className="text-sm font-bold uppercase tracking-wider mb-8"
-                    style={{ color: '#B78900', letterSpacing: '0.1em' }}
+                {allLessons.map((lesson) => (
+                  <div
+                    key={lesson.id}
+                    className="snap-center shrink-0 w-full px-1"
                   >
-                    Niveau {currentLesson.id}
-                  </p>
-
-                  {/* Large lesson icon */}
-                  <div className="text-8xl mb-8 select-none">
-                    {currentLesson.icon}
+                    <CourseCard
+                      lesson={lesson}
+                      onContinue={() => handleContinue(lesson)}
+                      progressMessage={getProgressMessage(lesson)}
+                    />
                   </div>
-
-                  {/* Mascot message */}
-                  <div className="flex items-center gap-2 justify-center">
-                    <div
-                      className="w-6 h-6 rounded-md flex items-center justify-center"
-                      style={{
-                        background: 'linear-gradient(135deg, #29CC57 0%, #009B2B 100%)',
-                        transform: 'rotate(45deg)',
-                      }}
-                    >
-                      <span className="text-white text-xs font-bold" style={{ transform: 'rotate(-45deg)' }}>
-                        Q
-                      </span>
-                    </div>
-                    <span className="text-sm font-medium" style={{ color: '#000' }}>
-                      {progressMessage}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Exercise progress row */}
-                <div
-                  className="px-5 py-3 flex items-center gap-3"
-                  style={{ borderTop: '1px solid #F2F2F2' }}
-                >
-                  <SmallCoin completed={completedExercisesForLesson > 0} />
-                  <span
-                    className="flex-1 text-sm font-medium truncate"
-                    style={{ color: '#808080' }}
-                  >
-                    {currentExercise.title}
-                  </span>
-                  {progress.completedExercises.includes(currentExercise.id) && (
-                    <GreenCheck />
-                  )}
-                </div>
-
-                {/* Continue button */}
-                <div className="px-5 pb-5 pt-2">
-                  <button
-                    onClick={() => {
-                      const route = exerciseRoutes[currentExercise.type];
-                      navigate(`/${route}/${currentLesson.id}`);
-                    }}
-                    className="w-full py-3.5 text-base font-bold transition-all active:scale-[0.98]"
-                    style={{
-                      borderRadius: 54,
-                      background: '#F7C325',
-                      color: '#5C4400',
-                      boxShadow: '0px -4px 0px 0px rgba(146, 109, 0, 0.3) inset, 0px 2px 0px 0px rgba(146, 109, 0, 0.2)',
-                    }}
-                  >
-                    Continuer
-                  </button>
-                </div>
+                ))}
               </div>
-            </motion.div>
 
-            {/* ── Lesson Carousel ── */}
+              {/* Mobile dot indicators */}
+              <div className="flex gap-1.5 justify-center mt-4">
+                {allLessons.map((lesson) => (
+                  <button
+                    key={lesson.id}
+                    onClick={() => setSelectedLesson(lesson)}
+                    className="rounded-full transition-all"
+                    style={{
+                      width: lesson.id === selectedLesson.id ? 24 : 8,
+                      height: 8,
+                      background: lesson.id === selectedLesson.id ? '#F7C325' : '#E5E5E5',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* ══ DESKTOP: Single card (shows selected lesson) ══ */}
+            <div className="hidden lg:block w-full" style={{ maxWidth: 600 }}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={selectedLesson.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CourseCard
+                    lesson={selectedLesson}
+                    onContinue={() => handleContinue(selectedLesson)}
+                    progressMessage={getProgressMessage(selectedLesson)}
+                  />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* ── Lesson Thumbnails (step indicators) ── */}
             <div className="mt-6 w-full" style={{ maxWidth: 600 }}>
               <div className="flex gap-3 overflow-x-auto pb-4 px-1 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap">
                 {allLessons.map((lesson) => {
                   const completed = isLessonComplete(lesson);
-                  const isCurrent = lesson.id === currentLesson.id;
+                  const isSelected = lesson.id === selectedLesson.id;
                   return (
                     <LessonThumb
                       key={lesson.id}
                       lesson={lesson}
-                      isCurrent={isCurrent}
+                      isCurrent={isSelected}
                       isCompleted={completed}
-                      onClick={() => navigate(`/lesson/${lesson.id}`)}
+                      onClick={() => setSelectedLesson(lesson)}
                     />
                   );
                 })}
-              </div>
-
-              {/* Mobile dot indicators */}
-              <div className="flex lg:hidden gap-1.5 justify-center mt-2">
-                {allLessons.slice(0, 5).map((lesson, i) => (
-                  <div
-                    key={i}
-                    className="rounded-full"
-                    style={{
-                      width: 8,
-                      height: 8,
-                      background: lesson.id === currentLesson.id ? '#F7C325' : '#E5E5E5',
-                    }}
-                  />
-                ))}
               </div>
             </div>
 
