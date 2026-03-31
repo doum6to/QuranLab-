@@ -1,12 +1,10 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProgress } from '../hooks/useProgress';
-import { useSpacedRepetition } from '../hooks/useSpacedRepetition';
-import { words } from '../data/words';
-import type { Word } from '../types';
+import { getLessonById } from '../data/lessons';
 
 const XP_PER_WORD = 15;
-const DECK_SIZE = 5;
 
 type CardState = 'front' | 'back';
 
@@ -43,23 +41,24 @@ function XpBanner({ xp }: { xp: number }) {
 }
 
 export default function Learn() {
-  const { progress, markWordLearned, addXp, updateStreak } = useProgress();
-  const { getWordsForReview } = useSpacedRepetition();
+  const { lessonId } = useParams<{ lessonId: string }>();
+  const navigate = useNavigate();
+  const { progress, markWordLearned, addXp, updateStreak, markLessonComplete } =
+    useProgress();
 
-  // Build the deck: review words first, then new words
-  const deck: Word[] = useMemo(() => {
-    const reviewWords = getWordsForReview(progress.wordProgress, words);
-    const learnedIds = new Set(Object.keys(progress.wordProgress).map(Number));
-    const newWords = words.filter((w) => !learnedIds.has(w.id));
-    const combined = [...reviewWords, ...newWords];
-    return combined.slice(0, DECK_SIZE);
-  }, []); // Only compute once on mount
+  const lesson = getLessonById(Number(lessonId));
+
+  const deck = useMemo(() => {
+    if (!lesson) return [];
+    return [...lesson.words];
+  }, [lesson]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cardState, setCardState] = useState<CardState>('front');
   const [earnedXp, setEarnedXp] = useState(0);
   const [showXpBanner, setShowXpBanner] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [knownCount, setKnownCount] = useState(0);
 
   const currentWord = deck[currentIndex] ?? null;
 
@@ -78,22 +77,61 @@ export default function Learn() {
         addXp(XP_PER_WORD);
         updateStreak();
         setEarnedXp((prev) => prev + XP_PER_WORD);
+        setKnownCount((prev) => prev + 1);
         setShowXpBanner(true);
         setTimeout(() => setShowXpBanner(false), 1500);
       }
 
       const nextIndex = currentIndex + 1;
       if (nextIndex >= deck.length) {
+        if (lesson) {
+          const allKnown = lesson.words.every(
+            (w) =>
+              progress.wordProgress[w.id] !== undefined ||
+              (known && w.id === currentWord.id)
+          );
+          if (allKnown) {
+            markLessonComplete(lesson.id);
+          }
+        }
         setIsComplete(true);
       } else {
         setCurrentIndex(nextIndex);
         setCardState('front');
       }
     },
-    [currentWord, currentIndex, deck.length, markWordLearned, addXp, updateStreak]
+    [
+      currentWord,
+      currentIndex,
+      deck.length,
+      lesson,
+      progress.wordProgress,
+      markWordLearned,
+      addXp,
+      updateStreak,
+      markLessonComplete,
+    ]
   );
 
-  // Complete screen
+  const handleGoBack = useCallback(() => {
+    if (lesson) {
+      navigate(`/lesson/${lesson.id}`);
+    } else {
+      navigate('/dashboard');
+    }
+  }, [lesson, navigate]);
+
+  if (!lesson) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center bg-white px-6">
+        <p className="text-xl text-gray-600 mb-6">Leçon introuvable</p>
+        <button onClick={() => navigate('/dashboard')} className="btn-primary">
+          Retour au tableau de bord
+        </button>
+      </div>
+    );
+  }
+
   if (isComplete || deck.length === 0) {
     return (
       <div className="min-h-dvh flex flex-col bg-white">
@@ -109,13 +147,16 @@ export default function Learn() {
           <h1 className="font-serif text-3xl font-bold text-gray-900 mb-3">
             Leçon terminée !
           </h1>
+          <p className="text-gray-500 mb-2">{lesson.title}</p>
 
           <div className="flex items-start gap-3 mb-8">
             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white text-lg font-bold shrink-0">
               Q
             </div>
             <div className="bg-speech border border-speech-border rounded-2xl rounded-tl-sm px-4 py-2.5 text-gray-800 font-medium">
-              Bravo, continue comme ça !
+              {knownCount === deck.length
+                ? 'Parfait ! Tu as tout retenu !'
+                : 'Bravo, continue comme ça !'}
             </div>
           </div>
 
@@ -129,14 +170,23 @@ export default function Learn() {
               +{earnedXp} XP
             </p>
             <p className="text-gray-500">gagnés dans cette leçon</p>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-center gap-6 text-sm">
+              <div>
+                <p className="font-bold text-gray-900">{knownCount}</p>
+                <p className="text-gray-400">connus</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900">
+                  {deck.length - knownCount}
+                </p>
+                <p className="text-gray-400">à revoir</p>
+              </div>
+            </div>
           </motion.div>
         </div>
 
         <div className="px-6 pb-8">
-          <button
-            onClick={() => window.history.back()}
-            className="btn-primary"
-          >
+          <button onClick={handleGoBack} className="btn-primary">
             Continuer
           </button>
         </div>
@@ -149,8 +199,8 @@ export default function Learn() {
       {/* Header */}
       <div className="px-6 pt-4 pb-2 flex items-center gap-4">
         <button
-          onClick={() => window.history.back()}
-          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+          onClick={handleGoBack}
+          className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors shrink-0"
         >
           <svg
             className="w-5 h-5"
@@ -174,6 +224,13 @@ export default function Learn() {
         </span>
       </div>
 
+      {/* Lesson title */}
+      <div className="px-6 pb-2">
+        <p className="text-xs text-gray-400 font-medium truncate">
+          {lesson.title}
+        </p>
+      </div>
+
       {/* Card area */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         <AnimatePresence mode="wait">
@@ -190,7 +247,6 @@ export default function Learn() {
               whileTap={cardState === 'front' ? { scale: 0.98 } : undefined}
               className="w-full card p-8 text-center cursor-pointer min-h-[280px] flex flex-col items-center justify-center"
             >
-              {/* Arabic word - always visible */}
               <p className="font-arabic text-5xl text-gray-900 mb-4 leading-relaxed">
                 {currentWord.arabic}
               </p>
@@ -215,11 +271,6 @@ export default function Learn() {
                   <p className="text-2xl font-semibold text-gray-900">
                     {currentWord.meaningFr}
                   </p>
-                  {currentWord.rootLetters && (
-                    <p className="text-sm text-gray-400">
-                      Racine : {currentWord.rootLetters}
-                    </p>
-                  )}
                 </motion.div>
               )}
             </motion.button>
@@ -252,7 +303,9 @@ export default function Learn() {
       </div>
 
       {/* XP Banner */}
-      <AnimatePresence>{showXpBanner && <XpBanner xp={XP_PER_WORD} />}</AnimatePresence>
+      <AnimatePresence>
+        {showXpBanner && <XpBanner xp={XP_PER_WORD} />}
+      </AnimatePresence>
     </div>
   );
 }

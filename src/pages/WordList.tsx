@@ -1,44 +1,8 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useProgress } from '../hooks/useProgress';
-import { words, getWordsByCategory } from '../data/words';
-import type { Word } from '../types';
-
-type CategoryTab = 'all' | 'noun' | 'verb' | 'particle';
-
-const TABS: { key: CategoryTab; label: string; description: string }[] = [
-  { key: 'all', label: 'Tout', description: 'Tous les mots du vocabulaire coranique' },
-  { key: 'noun', label: 'Noms', description: 'Noms, adjectifs et pronoms' },
-  { key: 'verb', label: 'Verbes', description: 'Verbes et formes verbales' },
-  { key: 'particle', label: 'Particules', description: 'Prépositions, particules et conjonctions' },
-];
-
-function categoryToFilter(tab: CategoryTab): Word['category'] | undefined {
-  if (tab === 'all') return undefined;
-  return tab as Word['category'];
-}
-
-function FrequencyBadge({ frequency }: { frequency: number }) {
-  let label: string;
-  let color: string;
-
-  if (frequency >= 1000) {
-    label = 'Très fréquent';
-    color = 'bg-emerald-100 text-emerald-700';
-  } else if (frequency >= 300) {
-    label = 'Fréquent';
-    color = 'bg-blue-100 text-blue-700';
-  } else {
-    label = 'Courant';
-    color = 'bg-gray-100 text-gray-600';
-  }
-
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${color}`}>
-      {label}
-    </span>
-  );
-}
+import { getAllLessons, getAllWords } from '../data/lessons';
+import type { Lesson } from '../types';
 
 function LearnedCheckmark() {
   return (
@@ -62,8 +26,11 @@ function LearnedCheckmark() {
 
 export default function WordList() {
   const { progress } = useProgress();
-  const [activeTab, setActiveTab] = useState<CategoryTab>('all');
+  const [activeLesson, setActiveLesson] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const lessons = useMemo(() => getAllLessons(), []);
+  const allWords = useMemo(() => getAllWords(), []);
 
   const learnedIds = useMemo(
     () => new Set(Object.keys(progress.wordProgress).map(Number)),
@@ -71,35 +38,24 @@ export default function WordList() {
   );
 
   const filteredWords = useMemo(() => {
-    let result: Word[];
+    const sourceWords = activeLesson === null
+      ? allWords
+      : lessons.find((l) => l.id === activeLesson)?.words ?? [];
 
-    if (activeTab === 'all') {
-      result = words;
-    } else if (activeTab === 'particle') {
-      // Include particles and prepositions
-      result = words.filter(
-        (w) => w.category === 'particle' || w.category === 'preposition'
-      );
-    } else {
-      result = getWordsByCategory(categoryToFilter(activeTab));
-    }
+    if (!searchQuery.trim()) return sourceWords;
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (w) =>
-          w.arabic.includes(q) ||
-          w.transliteration.toLowerCase().includes(q) ||
-          w.meaningFr.toLowerCase().includes(q) ||
-          w.meaningEn.toLowerCase().includes(q)
-      );
-    }
+    const q = searchQuery.toLowerCase().trim();
+    return sourceWords.filter(
+      (w) =>
+        w.arabic.includes(q) ||
+        w.transliteration.toLowerCase().includes(q) ||
+        w.meaningFr.toLowerCase().includes(q)
+    );
+  }, [activeLesson, searchQuery, allWords, lessons]);
 
-    // Sort by frequency descending
-    return [...result].sort((a, b) => b.frequency - a.frequency);
-  }, [activeTab, searchQuery]);
-
-  const activeTabInfo = TABS.find((t) => t.key === activeTab)!;
+  const tabLabel = (lesson: Lesson): string => {
+    return `L${lesson.id}`;
+  };
 
   return (
     <div className="min-h-dvh flex flex-col bg-white pb-20">
@@ -109,8 +65,7 @@ export default function WordList() {
           Vocabulaire
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          {words.length} mots -{' '}
-          {learnedIds.size} appris
+          {allWords.length} mots - {learnedIds.size} appris
         </p>
       </div>
 
@@ -140,23 +95,40 @@ export default function WordList() {
         </div>
       </div>
 
-      {/* Category tabs */}
+      {/* Lesson tabs */}
       <div className="px-6 border-b border-gray-100">
         <div className="flex gap-1 overflow-x-auto no-scrollbar">
-          {TABS.map((tab) => (
+          <button
+            onClick={() => setActiveLesson(null)}
+            className={`relative px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
+              activeLesson === null
+                ? 'text-emerald-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Tout
+            {activeLesson === null && (
+              <motion.div
+                layoutId="wordlist-tab-underline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full"
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              />
+            )}
+          </button>
+          {lessons.map((lesson) => (
             <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              key={lesson.id}
+              onClick={() => setActiveLesson(lesson.id)}
               className={`relative px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
-                activeTab === tab.key
+                activeLesson === lesson.id
                   ? 'text-emerald-600'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {tab.label}
-              {activeTab === tab.key && (
+              {tabLabel(lesson)}
+              {activeLesson === lesson.id && (
                 <motion.div
-                  layoutId="tab-underline"
+                  layoutId="wordlist-tab-underline"
                   className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full"
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
@@ -166,69 +138,66 @@ export default function WordList() {
         </div>
       </div>
 
-      {/* Section header */}
+      {/* Active lesson title */}
       <div className="px-6 py-3">
-        <p className="text-sm text-gray-500">{activeTabInfo.description}</p>
+        <p className="text-sm text-gray-500">
+          {activeLesson === null
+            ? 'Tous les mots du vocabulaire coranique'
+            : lessons.find((l) => l.id === activeLesson)?.title ?? ''}
+        </p>
       </div>
 
       {/* Word list */}
       <div className="px-6 flex-1">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab + searchQuery}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="space-y-2"
-          >
-            {filteredWords.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400 text-lg mb-1">Aucun mot trouvé</p>
-                <p className="text-gray-400 text-sm">
-                  Essaie un autre terme de recherche
-                </p>
-              </div>
-            ) : (
-              filteredWords.map((word, index) => (
-                <motion.div
-                  key={word.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.min(index * 0.03, 0.3) }}
-                  className="card flex items-center gap-4 p-4"
-                >
-                  {/* Arabic text */}
-                  <div className="w-16 text-center shrink-0">
-                    <p className="font-arabic text-2xl text-gray-900">
-                      {word.arabic}
-                    </p>
-                  </div>
+        <motion.div
+          key={`${activeLesson}-${searchQuery}`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
+          className="space-y-2"
+        >
+          {filteredWords.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400 text-lg mb-1">Aucun mot trouve</p>
+              <p className="text-gray-400 text-sm">
+                Essaie un autre terme de recherche
+              </p>
+            </div>
+          ) : (
+            filteredWords.map((word, index) => (
+              <motion.div
+                key={word.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(index * 0.03, 0.3) }}
+                className="card flex items-center gap-4 p-4"
+              >
+                {/* Arabic text */}
+                <div className="w-16 text-center shrink-0">
+                  <p className="font-arabic text-2xl text-gray-900">
+                    {word.arabic}
+                  </p>
+                </div>
 
-                  {/* Divider */}
-                  <div className="w-px h-10 bg-gray-200 shrink-0" />
+                {/* Divider */}
+                <div className="w-px h-10 bg-gray-200 shrink-0" />
 
-                  {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 truncate">
-                      {word.meaningFr}
-                    </p>
-                    <p className="text-sm text-gray-500 truncate">
-                      {word.transliteration}
-                      {word.rootLetters && ` - ${word.rootLetters}`}
-                    </p>
-                    <div className="mt-1.5">
-                      <FrequencyBadge frequency={word.frequency} />
-                    </div>
-                  </div>
+                {/* Details */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">
+                    {word.meaningFr}
+                  </p>
+                  <p className="text-sm text-gray-500 truncate">
+                    {word.transliteration}
+                  </p>
+                </div>
 
-                  {/* Learned status */}
-                  {learnedIds.has(word.id) && <LearnedCheckmark />}
-                </motion.div>
-              ))
-            )}
-          </motion.div>
-        </AnimatePresence>
+                {/* Learned status */}
+                {learnedIds.has(word.id) && <LearnedCheckmark />}
+              </motion.div>
+            ))
+          )}
+        </motion.div>
       </div>
     </div>
   );

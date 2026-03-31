@@ -3,21 +3,32 @@ export interface Word {
   arabic: string;
   transliteration: string;
   meaningFr: string;
-  meaningEn: string;
-  frequency: number;
-  category: 'noun' | 'verb' | 'particle' | 'preposition' | 'pronoun' | 'adjective';
-  rootLetters?: string;
-  exampleAyah?: string;
-  exampleAyahRef?: string;
+}
+
+export interface Lesson {
+  id: number;
+  title: string;
+  partieId: number;
+  icon: string;
+  words: Word[];
+}
+
+export interface Partie {
+  id: number;
+  title: string;
+  description: string;
+  coverage: number;
+  locked: boolean;
+  lessons: Lesson[];
 }
 
 export interface WordProgress {
   wordId: number;
-  level: number; // 0-5 (SRS levels)
-  nextReview: number; // timestamp
+  level: number;
+  nextReview: number;
   correctCount: number;
   incorrectCount: number;
-  lastReviewed: number; // timestamp
+  lastReviewed: number;
 }
 
 export interface UserProgress {
@@ -29,6 +40,7 @@ export interface UserProgress {
   studyGoal: string;
   studyTime: string;
   wordProgress: Record<number, WordProgress>;
+  completedLessons: number[];
 }
 
 export type QuizType = 'ar-to-fr' | 'fr-to-ar' | 'transliteration';
