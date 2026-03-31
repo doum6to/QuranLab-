@@ -1,12 +1,11 @@
 import { useState, useMemo, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useProgress } from '../hooks/useProgress';
-import { useSpacedRepetition } from '../hooks/useSpacedRepetition';
-import { words } from '../data/words';
+import { getLessonById, getAllWords } from '../data/lessons';
 import type { Word } from '../types';
 
 const XP_PER_QUESTION = 15;
-const QUIZ_SIZE = 5;
 
 interface Question {
   word: Word;
@@ -14,20 +13,35 @@ interface Question {
   correctIndex: number;
 }
 
-function generateQuiz(wordPool: Word[]): Question[] {
-  const pool = wordPool.length >= 4 ? wordPool : words.slice(0, Math.max(4, wordPool.length));
-  const selected = pool.slice(0, QUIZ_SIZE);
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
-  return selected.map((word) => {
-    const wrongOptions = pool
-      .filter((w) => w.id !== word.id)
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3)
-      .map((w) => w.meaningFr);
+function generateQuiz(lessonWords: Word[], allWords: Word[]): Question[] {
+  const pool = lessonWords.length >= 4 ? lessonWords : allWords.slice(0, Math.max(4, lessonWords.length));
 
-    const options = [...wrongOptions, word.meaningFr].sort(
-      () => Math.random() - 0.5
-    );
+  return lessonWords.map((word) => {
+    const wrongCandidates = pool
+      .filter((w) => w.id !== word.id && w.meaningFr !== word.meaningFr);
+    const shuffledWrong = shuffleArray(wrongCandidates).slice(0, 3);
+
+    let wrongOptions = shuffledWrong.map((w) => w.meaningFr);
+
+    if (wrongOptions.length < 3) {
+      const fallback = allWords
+        .filter((w) => w.id !== word.id && w.meaningFr !== word.meaningFr && !wrongOptions.includes(w.meaningFr));
+      const extra = shuffleArray(fallback)
+        .slice(0, 3 - wrongOptions.length)
+        .map((w) => w.meaningFr);
+      wrongOptions = [...wrongOptions, ...extra];
+    }
+
+    const options = shuffleArray([...wrongOptions, word.meaningFr]);
     const correctIndex = options.indexOf(word.meaningFr);
 
     return { word, options, correctIndex };
@@ -44,7 +58,7 @@ function ProgressDots({
   results: (boolean | null)[];
 }) {
   return (
-    <div className="flex items-center gap-2 justify-center">
+    <div className="flex items-center gap-2 justify-center flex-wrap">
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
@@ -83,21 +97,22 @@ function ProgressBar({
 }
 
 export default function Quiz() {
-  const { progress, addXp, updateStreak, updateWordProgress } = useProgress();
-  const { getWordsForReview } = useSpacedRepetition();
+  const { lessonId } = useParams<{ lessonId: string }>();
+  const navigate = useNavigate();
+  const { addXp, updateStreak, updateWordProgress, markLessonComplete } = useProgress();
+
+  const lesson = useMemo(() => getLessonById(Number(lessonId)), [lessonId]);
+  const allWords = useMemo(() => getAllWords(), []);
 
   const questions = useMemo(() => {
-    const reviewWords = getWordsForReview(progress.wordProgress, words);
-    const learnedIds = new Set(Object.keys(progress.wordProgress).map(Number));
-    const learnedWords = words.filter((w) => learnedIds.has(w.id));
-    const pool = reviewWords.length >= 4 ? reviewWords : learnedWords.length >= 4 ? learnedWords : words;
-    return generateQuiz(pool);
-  }, []); // Only compute once on mount
+    if (!lesson) return [];
+    return generateQuiz(lesson.words, allWords);
+  }, [lesson, allWords]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [results, setResults] = useState<(boolean | null)[]>(
-    Array(questions.length).fill(null)
+    () => Array(questions.length).fill(null)
   );
   const [isComplete, setIsComplete] = useState(false);
 
@@ -107,7 +122,7 @@ export default function Quiz() {
 
   const handleSelect = useCallback(
     (index: number) => {
-      if (isAnswered) return;
+      if (isAnswered || !question) return;
       setSelectedAnswer(index);
 
       const correct = index === question.correctIndex;
@@ -130,15 +145,31 @@ export default function Quiz() {
   const handleContinue = useCallback(() => {
     const nextIndex = currentIndex + 1;
     if (nextIndex >= questions.length) {
-      // XP is tracked via totalXp in progress
+      if (lesson) {
+        markLessonComplete(lesson.id);
+      }
       setIsComplete(true);
     } else {
       setCurrentIndex(nextIndex);
       setSelectedAnswer(null);
     }
-  }, [currentIndex, questions.length, results, isCorrect]);
+  }, [currentIndex, questions.length, lesson, markLessonComplete]);
 
-  // Complete screen
+  const handleClose = useCallback(() => {
+    navigate(-1);
+  }, [navigate]);
+
+  if (!lesson) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center bg-white px-6 text-center">
+        <p className="text-gray-500 text-lg mb-4">Lecon introuvable</p>
+        <button onClick={() => navigate('/dashboard')} className="btn-primary">
+          Retour au tableau de bord
+        </button>
+      </div>
+    );
+  }
+
   if (isComplete) {
     const correctCount = results.filter((r) => r === true).length;
     const totalXp = correctCount * XP_PER_QUESTION;
@@ -155,7 +186,7 @@ export default function Quiz() {
             {correctCount === questions.length ? '🏆' : '💪'}
           </motion.div>
           <h1 className="font-serif text-3xl font-bold text-gray-900 mb-3">
-            Quiz terminé !
+            Quiz termine !
           </h1>
 
           <div className="flex items-start gap-3 mb-8">
@@ -165,7 +196,7 @@ export default function Quiz() {
             <div className="bg-speech border border-speech-border rounded-2xl rounded-tl-sm px-4 py-2.5 text-gray-800 font-medium">
               {correctCount === questions.length
                 ? 'Parfait, sans faute !'
-                : `${correctCount}/${questions.length} bonnes réponses. Continue !`}
+                : `${correctCount}/${questions.length} bonnes reponses. Continue !`}
             </div>
           </div>
 
@@ -178,7 +209,7 @@ export default function Quiz() {
             <p className="text-4xl font-bold text-emerald-600 mb-1">
               +{totalXp} XP
             </p>
-            <p className="text-gray-500">gagnés dans ce quiz</p>
+            <p className="text-gray-500">gagnes dans ce quiz</p>
             <div className="flex justify-center gap-6 mt-4 pt-4 border-t border-gray-100">
               <div className="text-center">
                 <p className="text-lg font-bold text-emerald-600">
@@ -198,7 +229,7 @@ export default function Quiz() {
 
         <div className="px-6 pb-8">
           <button
-            onClick={() => window.history.back()}
+            onClick={() => navigate(`/lesson/${lesson.id}`)}
             className="btn-primary"
           >
             Continuer
@@ -213,7 +244,7 @@ export default function Quiz() {
       {/* Header */}
       <div className="px-6 pt-4 pb-2 flex items-center gap-4">
         <button
-          onClick={() => window.history.back()}
+          onClick={handleClose}
           className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
         >
           <svg
@@ -408,7 +439,7 @@ export default function Quiz() {
                       Incorrect
                     </span>
                     <p className="text-sm text-red-600">
-                      La bonne réponse est :{' '}
+                      La bonne reponse est :{' '}
                       <strong>
                         {question.options[question.correctIndex]}
                       </strong>

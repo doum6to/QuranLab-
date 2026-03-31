@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { UserProgress, WordProgress } from '../types';
+import type { UserProgress, WordProgress, Lesson } from '../types';
 
 const STORAGE_KEY = 'quranlab-progress';
 
@@ -12,6 +12,7 @@ const defaultProgress: UserProgress = {
   studyGoal: '',
   studyTime: '',
   wordProgress: {},
+  completedLessons: [],
 };
 
 function loadProgress(): UserProgress {
@@ -50,7 +51,7 @@ export function useProgress() {
       const newWordProgress: WordProgress = {
         wordId,
         level: 1,
-        nextReview: now + 24 * 60 * 60 * 1000, // 1 day
+        nextReview: now + 24 * 60 * 60 * 1000,
         correctCount: 0,
         incorrectCount: 0,
         lastReviewed: now,
@@ -77,7 +78,7 @@ export function useProgress() {
         ? Math.min(existing.level + 1, 5)
         : Math.max(existing.level - 1, 0);
 
-      const intervals = [0, 1, 3, 7, 14, 30]; // days per level
+      const intervals = [0, 1, 3, 7, 14, 30];
       const nextReview = now + intervals[newLevel] * 24 * 60 * 60 * 1000;
 
       const updated: WordProgress = {
@@ -124,28 +125,38 @@ export function useProgress() {
     });
   }, []);
 
+  const markLessonComplete = useCallback((lessonId: number) => {
+    setProgress((prev) => {
+      if (prev.completedLessons.includes(lessonId)) return prev;
+      return {
+        ...prev,
+        completedLessons: [...prev.completedLessons, lessonId],
+      };
+    });
+  }, []);
+
+  const isLessonComplete = useCallback(
+    (lesson: Lesson): boolean => {
+      return lesson.words.every((w) => progress.wordProgress[w.id] !== undefined);
+    },
+    [progress.wordProgress]
+  );
+
+  const getLessonProgress = useCallback(
+    (lesson: Lesson): number => {
+      if (lesson.words.length === 0) return 0;
+      const learned = lesson.words.filter(
+        (w) => progress.wordProgress[w.id] !== undefined
+      ).length;
+      return Math.round((learned / lesson.words.length) * 100);
+    },
+    [progress.wordProgress]
+  );
+
   const resetProgress = useCallback(() => {
     setProgress({ ...defaultProgress });
     localStorage.removeItem(STORAGE_KEY);
   }, []);
-
-  // Calculate Quran coverage: sum of frequency percentages for learned words
-  const calculateQuranCoverage = useCallback(
-    (allWords: { id: number; frequency: number }[]): number => {
-      const learnedIds = new Set(
-        Object.keys(progress.wordProgress).map(Number)
-      );
-      const totalFrequency = allWords.reduce((sum, w) => sum + w.frequency, 0);
-      if (totalFrequency === 0) return 0;
-
-      const learnedFrequency = allWords
-        .filter((w) => learnedIds.has(w.id))
-        .reduce((sum, w) => sum + w.frequency, 0);
-
-      return Math.round((learnedFrequency / totalFrequency) * 100 * 10) / 10;
-    },
-    [progress.wordProgress]
-  );
 
   return {
     progress,
@@ -154,7 +165,9 @@ export function useProgress() {
     updateWordProgress,
     addXp,
     updateStreak,
+    markLessonComplete,
+    isLessonComplete,
+    getLessonProgress,
     resetProgress,
-    calculateQuranCoverage,
   };
 }

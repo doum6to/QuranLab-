@@ -1,16 +1,15 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useProgress } from '../hooks/useProgress';
-import { words } from '../data/words';
+import { parties } from '../data/lessons';
+import LessonNode from '../components/LessonNode';
+import type { Lesson } from '../types';
 
 function StreakBadge({ count }: { count: number }) {
   return (
     <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1.5">
-      <svg
-        className="w-5 h-5 text-amber-500"
-        fill="currentColor"
-        viewBox="0 0 24 24"
-      >
+      <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
       </svg>
       <span className="font-bold text-amber-700 text-sm">{count}</span>
@@ -18,17 +17,29 @@ function StreakBadge({ count }: { count: number }) {
   );
 }
 
-function CircularProgress({
-  percentage,
-  size = 160,
-  strokeWidth = 10,
+function XpBadge({ xp }: { xp: number }) {
+  return (
+    <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
+      <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+      <span className="font-bold text-emerald-700 text-sm">{xp}</span>
+    </div>
+  );
+}
+
+function CircularLessonProgress({
+  completed,
+  total,
 }: {
-  percentage: number;
-  size?: number;
-  strokeWidth?: number;
+  completed: number;
+  total: number;
 }) {
+  const size = 100;
+  const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
+  const percentage = total > 0 ? (completed / total) * 100 : 0;
   const offset = circumference - (percentage / 100) * circumference;
 
   return (
@@ -53,163 +64,188 @@ function CircularProgress({
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.2, ease: 'easeOut' }}
+          transition={{ duration: 1, ease: 'easeOut' }}
         />
       </svg>
       <div className="absolute text-center">
-        <span className="text-3xl font-bold text-gray-900">
-          {percentage.toFixed(1)}%
-        </span>
-        <p className="text-xs text-gray-500 mt-0.5">du Coran</p>
+        <span className="text-xl font-bold text-gray-900">{completed}</span>
+        <span className="text-sm text-gray-400">/{total}</span>
       </div>
     </div>
   );
 }
 
-function SpeechBubble({ text }: { text: string }) {
+function LockSmallIcon() {
   return (
-    <div className="flex items-start gap-3">
-      <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white text-lg font-bold shrink-0">
-        Q
-      </div>
-      <div className="bg-speech border border-speech-border rounded-2xl rounded-tl-sm px-4 py-2.5 text-gray-800 font-medium">
-        {text}
-      </div>
-    </div>
+    <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C9.24 2 7 4.24 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.76-2.24-5-5-5zm3 8H9V7c0-1.66 1.34-3 3-3s3 1.34 3 3v3zm-3 5a1.5 1.5 0 110 3 1.5 1.5 0 010-3z" />
+    </svg>
   );
 }
 
 export default function Dashboard() {
-  const { progress, calculateQuranCoverage } = useProgress();
+  const navigate = useNavigate();
+  const { progress, isLessonComplete, getLessonProgress } = useProgress();
 
-  const coverage = useMemo(
-    () => calculateQuranCoverage(words),
-    [calculateQuranCoverage]
-  );
+  const activePartie = parties[0];
 
-  const nextLesson = useMemo(() => {
-    const learnedIds = new Set(Object.keys(progress.wordProgress).map(Number));
-    const nextWord = words.find((w) => !learnedIds.has(w.id));
-    return nextWord;
-  }, [progress.wordProgress]);
+  const completedLessonIds = useMemo(() => {
+    const ids = new Set<number>();
+    for (const lesson of activePartie.lessons) {
+      if (isLessonComplete(lesson)) {
+        ids.add(lesson.id);
+      }
+    }
+    return ids;
+  }, [activePartie.lessons, isLessonComplete]);
+
+  const completedCount = completedLessonIds.size;
+  const totalLessons = activePartie.lessons.length;
+
+  const firstInProgressIndex = useMemo(() => {
+    return activePartie.lessons.findIndex((l) => !completedLessonIds.has(l.id));
+  }, [activePartie.lessons, completedLessonIds]);
+
+  function getLessonStatus(lesson: Lesson, index: number): 'locked' | 'available' | 'in-progress' | 'completed' {
+    if (completedLessonIds.has(lesson.id)) return 'completed';
+    if (index === firstInProgressIndex) return 'in-progress';
+    return 'available';
+  }
+
+  const progressMessage = useMemo(() => {
+    if (completedCount === 0) {
+      return 'Bismillah ! Commence ta premiere lecon pour decouvrir le vocabulaire du Coran.';
+    }
+    if (completedCount === totalLessons) {
+      return 'Machallah ! Tu as termine toutes les lecons de la Partie 1 !';
+    }
+    return `Tu as termine ${completedCount} lecon${completedCount > 1 ? 's' : ''} sur ${totalLessons}. Continue comme ca !`;
+  }, [completedCount, totalLessons]);
 
   return (
     <div className="min-h-dvh flex flex-col bg-white pb-20">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">
-            Niveau 1
-          </p>
-          <h1 className="font-serif text-2xl font-bold text-gray-900">
-            Vocabulaire du Coran
-          </h1>
+        <h1 className="font-serif text-2xl font-bold text-gray-900">QuranLab</h1>
+        <div className="flex items-center gap-2">
+          <StreakBadge count={progress.streak} />
+          <XpBadge xp={progress.totalXp} />
         </div>
-        <StreakBadge count={progress.streak} />
       </div>
 
-      {/* Content */}
+      {/* Partie tabs */}
+      <div className="px-6 pb-4">
+        <div className="flex gap-3 overflow-x-auto">
+          {parties.map((partie) => (
+            <motion.div
+              key={partie.id}
+              whileTap={!partie.locked ? { scale: 0.97 } : undefined}
+              className={`
+                shrink-0 rounded-xl px-4 py-3 min-w-[140px] transition-colors
+                ${!partie.locked
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-400 border border-gray-200'
+                }
+              `}
+            >
+              <p className={`text-xs font-bold uppercase tracking-wider ${!partie.locked ? 'text-emerald-100' : 'text-gray-400'}`}>
+                Partie {partie.id}
+              </p>
+              <p className={`text-sm font-semibold mt-0.5 ${!partie.locked ? 'text-white' : 'text-gray-500'}`}>
+                {partie.title}
+              </p>
+              {partie.locked && (
+                <div className="flex items-center gap-1 mt-1">
+                  <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C9.24 2 7 4.24 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.76-2.24-5-5-5zm3 8H9V7c0-1.66 1.34-3 3-3s3 1.34 3 3v3z" />
+                  </svg>
+                  <span className="text-xs text-gray-400">Verrouille</span>
+                </div>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
       <div className="flex-1 px-6 space-y-6">
-        {/* Progress ring */}
+        {/* Progress overview with mascot */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex flex-col items-center py-6"
+          className="flex items-start gap-4"
         >
-          <CircularProgress percentage={coverage} />
-          <div className="flex gap-8 mt-6">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">
-                {progress.wordsLearned}
-              </p>
-              <p className="text-sm text-gray-500">mots appris</p>
+          {/* Mascot "Q" */}
+          <div className="w-11 h-11 rounded-full bg-emerald-500 flex items-center justify-center text-white text-lg font-bold shrink-0 mt-1">
+            Q
+          </div>
+
+          <div className="flex-1">
+            {/* Speech bubble */}
+            <div
+              className="rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-gray-800 font-medium leading-relaxed"
+              style={{ backgroundColor: '#FEF9C3', border: '1px solid #FDE047' }}
+            >
+              {progressMessage}
             </div>
-            <div className="w-px bg-gray-200" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-gray-900">
-                {progress.totalXp}
-              </p>
-              <p className="text-sm text-gray-500">XP total</p>
-            </div>
+          </div>
+
+          {/* Circular progress */}
+          <div className="shrink-0">
+            <CircularLessonProgress completed={completedCount} total={totalLessons} />
           </div>
         </motion.div>
 
-        {/* Speech bubble */}
+        {/* Learning path */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.25 }}
         >
-          <SpeechBubble
-            text={
-              progress.wordsLearned === 0
-                ? 'Prêt à commencer ton apprentissage ?'
-                : 'Continue ton apprentissage !'
-            }
-          />
-        </motion.div>
+          <h2 className="font-serif text-lg font-bold text-gray-900 mb-4">
+            Partie 1 : {activePartie.title}
+          </h2>
 
-        {/* Current lesson card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="card p-5"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                Prochaine leçon
-              </p>
-              <p className="font-semibold text-gray-900 mt-1">
-                {nextLesson
-                  ? `${nextLesson.meaningFr} - ${nextLesson.transliteration}`
-                  : 'Tout est révisé !'}
-              </p>
-            </div>
-            {nextLesson && (
-              <span className="font-arabic text-3xl text-gray-700">
-                {nextLesson.arabic}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-emerald-500 rounded-full"
-                style={{
-                  width: `${Math.min(
-                    (progress.wordsLearned / words.length) * 100,
-                    100
-                  )}%`,
-                }}
+          <div className="space-y-0">
+            {activePartie.lessons.map((lesson, index) => (
+              <LessonNode
+                key={lesson.id}
+                lesson={lesson}
+                status={getLessonStatus(lesson, index)}
+                progress={getLessonProgress(lesson)}
+                isLast={index === activePartie.lessons.length - 1}
+                onClick={() => navigate(`/lesson/${lesson.id}`)}
               />
-            </div>
-            <span className="text-xs text-gray-500 font-medium">
-              {progress.wordsLearned}/{words.length}
-            </span>
+            ))}
           </div>
-          <button className="btn-primary">Continuer</button>
         </motion.div>
 
-        {/* Quick actions */}
+        {/* Locked parties */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="grid grid-cols-2 gap-3"
+          transition={{ delay: 0.4 }}
+          className="space-y-3 pb-4"
         >
-          <div className="card p-4 text-center">
-            <p className="text-2xl mb-2">📖</p>
-            <p className="font-semibold text-gray-900 text-sm">Apprendre</p>
-            <p className="text-xs text-gray-500 mt-0.5">Nouveaux mots</p>
-          </div>
-          <div className="card p-4 text-center">
-            <p className="text-2xl mb-2">🧠</p>
-            <p className="font-semibold text-gray-900 text-sm">Quiz</p>
-            <p className="text-xs text-gray-500 mt-0.5">Teste-toi</p>
-          </div>
+          {parties.filter((p) => p.locked).map((partie) => (
+            <div
+              key={partie.id}
+              className="rounded-2xl border border-gray-200 bg-gray-50 p-5 flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+                <LockSmallIcon />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-500 text-sm">
+                  Partie {partie.id} : {partie.title}
+                </p>
+                <p className="text-xs text-gray-400 mt-0.5">{partie.description}</p>
+                <span className="inline-block mt-1.5 text-xs font-medium text-gray-400 bg-gray-200 rounded-full px-2.5 py-0.5">
+                  Bientot disponible
+                </span>
+              </div>
+            </div>
+          ))}
         </motion.div>
       </div>
     </div>
