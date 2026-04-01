@@ -121,7 +121,7 @@ export default function WriteExercise() {
           >
             ✍️
           </motion.div>
-          <h1 className="font-serif text-3xl font-bold text-gray-900 mb-3">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
             Ecriture terminee !
           </h1>
           <div className="flex items-start gap-3 mb-8">

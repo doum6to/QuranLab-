@@ -157,7 +157,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 >
                   Q
                 </motion.div>
-                <h1 className="font-serif text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
+                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-4">
                   Apprends le Coran
                   <br />
                   par la pratique
@@ -323,7 +323,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 >
                   🎉
                 </motion.div>
-                <h1 className="font-serif text-4xl font-bold text-gray-900 mb-4">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">
                   Tu es prêt !
                 </h1>
                 <p className="text-lg text-gray-500 max-w-sm mb-2">

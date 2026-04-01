@@ -186,7 +186,7 @@ export default function Quiz() {
           >
             {correctCount === questions.length ? '🏆' : '💪'}
           </motion.div>
-          <h1 className="font-serif text-3xl font-bold text-gray-900 mb-3">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
             Quiz termine !
           </h1>
 

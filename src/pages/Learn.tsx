@@ -148,7 +148,7 @@ export default function Learn() {
           >
             🎉
           </motion.div>
-          <h1 className="font-serif text-3xl font-bold text-gray-900 mb-3">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
             Leçon terminée !
           </h1>
           <p className="text-gray-500 mb-2">{lesson.title}</p>

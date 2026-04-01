@@ -214,7 +214,7 @@ function CourseCard({
           justifyContent: 'center',
         }}
       >
-        <h2 className="font-serif text-2xl font-bold text-black mb-1">
+        <h2 className="text-2xl font-bold text-black mb-1">
           {lesson.title}
         </h2>
         <p
@@ -284,6 +284,100 @@ function CourseCard({
   );
 }
 
+// ── Mobile Course Card (redesigned for swipeable carousel) ──
+function MobileCourseCard({
+  lesson,
+  onContinue,
+  progressMessage,
+}: {
+  lesson: Lesson;
+  onContinue: () => void;
+  progressMessage: string;
+}) {
+  const { progress } = useProgress();
+  const currentExercise = useCurrentExercise(lesson);
+  const completedCount = lesson.exercises.filter((ex) =>
+    progress.completedExercises.includes(ex.id)
+  ).length;
+
+  return (
+    <div
+      className="flex flex-col items-center justify-between"
+      style={{
+        borderRadius: 20,
+        border: '1px solid #F0E8D8',
+        background: '#FFFBF0',
+        padding: '28px 24px',
+        minHeight: 480,
+      }}
+    >
+      {/* Block 1: Header */}
+      <div className="text-center">
+        <h2 className="text-xl font-bold text-gray-900 mb-1">
+          {lesson.title}
+        </h2>
+        <p
+          className="text-xs font-bold uppercase tracking-wider"
+          style={{ color: '#B78900', letterSpacing: '0.1em' }}
+        >
+          LEVEL {lesson.id}
+        </p>
+      </div>
+
+      {/* Block 2: Illustration zone */}
+      <div className="flex items-center justify-center py-8 flex-1">
+        <span className="text-7xl select-none">{lesson.icon}</span>
+      </div>
+
+      {/* Block 3: Status indicator */}
+      <div className="flex items-center gap-2 justify-center mb-4">
+        <div
+          className="w-5 h-5 rounded-md flex items-center justify-center"
+          style={{
+            background: 'linear-gradient(135deg, #29CC57 0%, #009B2B 100%)',
+            transform: 'rotate(45deg)',
+          }}
+        >
+          <span className="text-white text-[10px] font-bold" style={{ transform: 'rotate(-45deg)' }}>
+            Q
+          </span>
+        </div>
+        <span className="text-sm font-semibold text-gray-900">
+          {progressMessage}
+        </span>
+      </div>
+
+      {/* Block 4: Progress row */}
+      <div className="flex items-center gap-3 w-full mb-4">
+        <SmallCoin completed={completedCount > 0} />
+        <span
+          className="flex-1 text-sm font-medium truncate"
+          style={{ color: '#808080' }}
+        >
+          {currentExercise.title}
+        </span>
+        {progress.completedExercises.includes(currentExercise.id) && (
+          <GreenCheck />
+        )}
+      </div>
+
+      {/* Block 5: Action button with 3D press effect */}
+      <button
+        onClick={onContinue}
+        className="w-full py-3.5 text-base font-bold transition-all active:scale-[0.98]"
+        style={{
+          borderRadius: 9999,
+          background: '#F7C325',
+          color: '#5C4400',
+          boxShadow: '0px 4px 0px 0px #C49A1A',
+        }}
+      >
+        Continuer
+      </button>
+    </div>
+  );
+}
+
 // ── Main Dashboard ──
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -324,14 +418,17 @@ export default function Dashboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isScrolling = useRef(false);
 
-  // Scroll to selected lesson when changed via thumbnail click
+  // Scroll to selected lesson when changed via dot/thumbnail click
   useEffect(() => {
     if (scrollRef.current && !isScrolling.current) {
       const index = allLessons.findIndex((l) => l.id === selectedLesson.id);
-      scrollRef.current.scrollTo({
-        left: index * scrollRef.current.clientWidth,
-        behavior: 'smooth',
-      });
+      const child = scrollRef.current.children[index] as HTMLElement;
+      if (child) {
+        scrollRef.current.scrollTo({
+          left: child.offsetLeft - (scrollRef.current.clientWidth - child.offsetWidth) / 2,
+          behavior: 'smooth',
+        });
+      }
     }
   }, [selectedLesson.id, allLessons]);
 
@@ -341,9 +438,20 @@ export default function Dashboard() {
     clearTimeout((handleScroll as any)._timeout);
     (handleScroll as any)._timeout = setTimeout(() => {
       if (!scrollRef.current) return;
-      const { scrollLeft, clientWidth } = scrollRef.current;
-      const index = Math.round(scrollLeft / clientWidth);
-      const clamped = Math.max(0, Math.min(index, allLessons.length - 1));
+      const container = scrollRef.current;
+      const children = Array.from(container.children) as HTMLElement[];
+      const containerCenter = container.scrollLeft + container.clientWidth / 2;
+      let closestIndex = 0;
+      let closestDist = Infinity;
+      children.forEach((child, i) => {
+        const childCenter = child.offsetLeft + child.offsetWidth / 2;
+        const dist = Math.abs(containerCenter - childCenter);
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestIndex = i;
+        }
+      });
+      const clamped = Math.max(0, Math.min(closestIndex, allLessons.length - 1));
       if (allLessons[clamped] && allLessons[clamped].id !== selectedLesson.id) {
         setSelectedLesson(allLessons[clamped]);
       }
@@ -382,7 +490,7 @@ export default function Dashboard() {
             </button>
 
             {/* Desktop text */}
-            <span className="hidden lg:block font-serif text-xl font-bold">QuranLab</span>
+            <span className="hidden lg:block text-xl font-bold">QuranLab</span>
             <button
               className="hidden lg:block text-sm font-semibold pb-0.5"
               style={{ borderBottom: '2px solid #000' }}
@@ -473,22 +581,25 @@ export default function Dashboard() {
           <main className="flex-1 flex flex-col items-center lg:pt-10 pb-20">
 
             {/* ══ MOBILE: Swipeable card carousel ══ */}
-            <div className="lg:hidden w-full" style={{ maxWidth: 600 }}>
+            <div className="lg:hidden w-full">
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
-                className="flex overflow-x-auto snap-x snap-mandatory"
+                className="flex overflow-x-auto snap-x snap-mandatory gap-4"
                 style={{
                   scrollbarWidth: 'none',
                   WebkitOverflowScrolling: 'touch',
+                  paddingLeft: '7.5vw',
+                  paddingRight: '7.5vw',
                 }}
               >
                 {allLessons.map((lesson) => (
                   <div
                     key={lesson.id}
-                    className="snap-center shrink-0 w-full px-1"
+                    className="snap-center shrink-0"
+                    style={{ width: '85vw', maxWidth: 510 }}
                   >
-                    <CourseCard
+                    <MobileCourseCard
                       lesson={lesson}
                       onContinue={() => handleContinue(lesson)}
                       progressMessage={getProgressMessage(lesson)}
@@ -498,44 +609,70 @@ export default function Dashboard() {
               </div>
 
               {/* Mobile dot indicators */}
-              <div className="flex gap-1.5 justify-center mt-4">
+              <div className="flex gap-2 justify-center mt-5">
                 {allLessons.map((lesson) => (
                   <button
                     key={lesson.id}
                     onClick={() => setSelectedLesson(lesson)}
                     className="rounded-full transition-all"
                     style={{
-                      width: lesson.id === selectedLesson.id ? 24 : 8,
-                      height: 8,
-                      background: lesson.id === selectedLesson.id ? '#F7C325' : '#E5E5E5',
+                      width: lesson.id === selectedLesson.id ? 10 : 8,
+                      height: lesson.id === selectedLesson.id ? 10 : 8,
+                      background: lesson.id === selectedLesson.id ? '#F7C325' : '#D9D9D9',
+                      border: lesson.id === selectedLesson.id ? '2px solid #E8B30E' : 'none',
                     }}
                   />
                 ))}
               </div>
             </div>
 
-            {/* ══ DESKTOP: Single card (shows selected lesson) ══ */}
-            <div className="hidden lg:block w-full" style={{ maxWidth: 600 }}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={selectedLesson.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <CourseCard
-                    lesson={selectedLesson}
-                    onContinue={() => handleContinue(selectedLesson)}
-                    progressMessage={getProgressMessage(selectedLesson)}
-                  />
-                </motion.div>
-              </AnimatePresence>
+            {/* ══ DESKTOP: Single card with stacking effect ══ */}
+            <div className="hidden lg:block w-full pb-3 pr-3" style={{ maxWidth: 612 }}>
+              <div className="relative">
+                {/* Ghost card 2 (bottom-most) */}
+                <div
+                  className="absolute inset-0 rounded-[20px]"
+                  style={{
+                    border: '2px solid #E5E5E5',
+                    background: '#F0F0F0',
+                    transform: 'translate(12px, 12px)',
+                    zIndex: 0,
+                  }}
+                />
+                {/* Ghost card 1 (middle) */}
+                <div
+                  className="absolute inset-0 rounded-[20px]"
+                  style={{
+                    border: '2px solid #EBEBEB',
+                    background: '#F8F8F8',
+                    transform: 'translate(6px, 6px)',
+                    zIndex: 1,
+                  }}
+                />
+                {/* Actual card (top) */}
+                <div className="relative" style={{ zIndex: 2 }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={selectedLesson.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <CourseCard
+                        lesson={selectedLesson}
+                        onContinue={() => handleContinue(selectedLesson)}
+                        progressMessage={getProgressMessage(selectedLesson)}
+                      />
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
 
-            {/* ── Lesson Thumbnails (step indicators) ── */}
-            <div className="mt-6 w-full" style={{ maxWidth: 600 }}>
-              <div className="flex gap-3 overflow-x-auto pb-4 px-1 snap-x snap-mandatory scrollbar-hide justify-center flex-wrap">
+            {/* ── Lesson Thumbnails (desktop only, scrollable row) ── */}
+            <div className="hidden lg:block mt-6 w-full" style={{ maxWidth: 600 }}>
+              <div className="flex gap-3 overflow-x-auto pb-4 px-1 flex-nowrap justify-center" style={{ scrollbarWidth: 'none' }}>
                 {allLessons.map((lesson) => {
                   const completed = isLessonComplete(lesson);
                   const isSelected = lesson.id === selectedLesson.id;

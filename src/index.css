@@ -2,7 +2,7 @@
 
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+
   --font-arabic: 'Amiri', 'Scheherazade New', serif;
   --color-gold: #d4af37;
   --color-gold-light: #f5e6b8;
@@ -41,9 +41,6 @@
     direction: rtl;
   }
 
-  .font-serif {
-    font-family: var(--font-serif);
-  }
 
   .btn-primary {
     @apply w-full py-4 bg-emerald-500 text-white font-semibold text-lg rounded-full transition-all duration-200 hover:bg-emerald-600 active:scale-[0.98];

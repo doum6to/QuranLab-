@@ -61,7 +61,7 @@ export default function WordList() {
     <div className="min-h-dvh flex flex-col bg-white pb-20">
       {/* Header */}
       <div className="px-6 pt-6 pb-2">
-        <h1 className="font-serif text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900">
           Vocabulaire
         </h1>
         <p className="text-sm text-gray-500 mt-1">

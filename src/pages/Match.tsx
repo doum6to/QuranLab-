@@ -114,7 +114,7 @@ export default function Match() {
           >
             🎯
           </motion.div>
-          <h1 className="font-serif text-3xl font-bold text-gray-900 mb-3">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">
             Associations terminees !
           </h1>
           <div className="flex items-start gap-3 mb-8">

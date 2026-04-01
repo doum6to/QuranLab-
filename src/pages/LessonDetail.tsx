@@ -101,7 +101,7 @@ export default function LessonDetail() {
             >
               Niveau {lesson.id}
             </p>
-            <p className="font-serif text-lg sm:text-xl font-bold text-white leading-tight">
+            <p className="text-lg sm:text-xl font-bold text-white leading-tight">
               {lesson.title}
             </p>
             <div className="mt-3 flex items-center justify-center gap-2">
@@ -191,7 +191,7 @@ export default function LessonDetail() {
                 />
 
                 <div className="text-center mb-6">
-                  <h3 className="font-serif text-xl font-bold text-white mb-1.5">
+                  <h3 className="text-xl font-bold text-white mb-1.5">
                     {selectedExercise.title}
                   </h3>
                   <p className="text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
