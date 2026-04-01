@@ -202,7 +202,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    backfaceVisibility: 'hidden',
     padding: spacing.xl,
   },
   cardFront: {

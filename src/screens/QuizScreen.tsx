@@ -130,27 +130,27 @@ export default function QuizScreen() {
         {current.options.map((option, i) => {
           const isSelected = selectedAnswer === option;
           const isAnswer = option === current.correctAnswer;
-          let optionStyle = styles.option;
-          let textStyle = styles.optionText;
-
-          if (selectedAnswer) {
-            if (isAnswer) {
-              optionStyle = { ...styles.option, ...styles.optionCorrect };
-              textStyle = { ...styles.optionText, ...styles.optionTextCorrect };
-            } else if (isSelected && !isCorrect) {
-              optionStyle = { ...styles.option, ...styles.optionWrong };
-              textStyle = { ...styles.optionText, ...styles.optionTextWrong };
-            }
-          }
 
           return (
             <TouchableOpacity
               key={i}
-              style={[optionStyle]}
+              style={[
+                styles.option,
+                selectedAnswer && isAnswer ? styles.optionCorrect : null,
+                selectedAnswer && isSelected && !isCorrect ? styles.optionWrong : null,
+              ]}
               onPress={() => handleSelect(option)}
               activeOpacity={0.7}
             >
-              <Text style={[textStyle]}>{option}</Text>
+              <Text
+                style={[
+                  styles.optionText,
+                  selectedAnswer && isAnswer ? styles.optionTextCorrect : null,
+                  selectedAnswer && isSelected && !isCorrect ? styles.optionTextWrong : null,
+                ]}
+              >
+                {option}
+              </Text>
             </TouchableOpacity>
           );
         })}
