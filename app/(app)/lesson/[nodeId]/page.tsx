@@ -1,5 +1,6 @@
+import { notFound } from 'next/navigation';
 import LessonEngine from '@/components/LessonEngine';
-import { getLessonByNodeId } from '@/data/lessons/demo';
+import { getLessonByNodeId } from '@/data/lessons';
 
 export default async function LessonPage({
   params,
@@ -8,6 +9,10 @@ export default async function LessonPage({
 }) {
   const { nodeId } = await params;
   const lesson = getLessonByNodeId(nodeId);
+
+  if (!lesson) {
+    notFound();
+  }
 
   return (
     <LessonEngine

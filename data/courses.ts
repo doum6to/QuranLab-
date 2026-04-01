@@ -135,7 +135,7 @@ const partie2: CourseDefinition = {
       description: 'Attributs divins et adjectifs coraniques',
       order: 1,
       nodes: [
-        { id: 'node-p2-attributs-1', title: 'Attributs & Adjectifs', orderIndex: 0, isFreePreview: false, vocabularyRef: 'liste2_attributsAdjectifs' },
+        { id: 'node-p2-attributs-1', title: 'Attributs & Adjectifs', orderIndex: 0, isFreePreview: false, vocabularyRef: 'liste2_adjectifs' },
       ],
     },
     {
