@@ -671,8 +671,27 @@ export default function Dashboard() {
             </div>
 
             {/* ── Lesson Thumbnails (desktop only, scrollable row) ── */}
-            <div className="hidden lg:block mt-6 w-full" style={{ maxWidth: 600 }}>
-              <div className="flex gap-3 overflow-x-auto pb-4 px-1 flex-nowrap justify-center" style={{ scrollbarWidth: 'none' }}>
+            <div className="hidden lg:block mt-6 w-full relative" style={{ maxWidth: 600 }}>
+              {/* Left fade indicator */}
+              <div
+                className="absolute left-0 top-0 bottom-4 w-8 z-10 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(to right, #fff 30%, transparent)',
+                  borderLeft: '2px solid #E5E5E5',
+                }}
+              />
+              {/* Right fade indicator */}
+              <div
+                className="absolute right-0 top-0 bottom-4 w-8 z-10 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(to left, #fff 30%, transparent)',
+                  borderRight: '2px solid #E5E5E5',
+                }}
+              />
+              <div
+                className="flex gap-3 overflow-x-auto pb-4 flex-nowrap"
+                style={{ scrollbarWidth: 'none', padding: '0 32px' }}
+              >
                 {allLessons.map((lesson) => {
                   const completed = isLessonComplete(lesson);
                   const isSelected = lesson.id === selectedLesson.id;
