@@ -285,3 +285,357 @@ Check the following reference images in `references/images/` before designing an
 - `brilliant-home-course-card.png` — Home dashboard: streak badge top-right, course title "Functions" in bold serif, "LEVEL 1" label, large illustration carousel with dots, below: white rounded card with exercise list ("Warm up" with checkmark, "Graphing Solutions" with gray ring), blue "Start" button full-width, bottom tab bar (Home/Courses/You).
 
 **KEY PATTERN FOR EXERCISE LEVELS**: Each lesson/level contains 3-5 exercise nodes arranged vertically with connecting rings. Exercise node = 3D-style concentric circle/ring (colored when active/complete, gray when locked). Exercise name displayed to the right of the ring. Tapping a node opens a bottom sheet with exercise name + action button. Completed = colored ring + checkmark inside. Active = colored ring + badge/icon floating on top. Locked = gray flat rings.
+
+---
+
+## Detailed Screen Reference Catalog (Mobbin Screenshots)
+
+The following 45 screens were captured from Brilliant.org's mobile app and serve as the primary visual reference for QuranLab's UI/UX design. They are organized by user flow.
+
+### A. Splash & Onboarding Flow (Screens 32-35, 37, 40)
+
+#### A1. Splash Screen
+- Logo "Brilliant" centered in bold sans-serif black text
+- Pure white background, no other elements
+- Minimal, clean launch screen
+
+#### A2. Onboarding Hero — "Learn by doing"
+- Giant bold serif text stacked: "Learn", "by", "doing"
+- Decorative elements overlapping text: graph with orange dots, code snippets ("while learning", "if doing", "keep growing"), blue curve with dot
+- Subtitle in gray: "Interactive problem solving that's effective and fun. Get smarter in 15 minutes a day."
+- Green CTA button "Continue" (full-width, rounded-xl)
+- "Sign in" link below
+
+#### A3. Learning Path Intro
+- Progress bar at top (green fill, ~5%)
+- Back arrow top-left
+- Mascot (green diamond with face) centered
+- Yellow speech bubble: "Let's build a learning path just for you."
+- Dark rounded "Continue" button at bottom
+- Generous whitespace
+
+#### A4. Goal Selection — Empty State
+- Mascot + yellow speech bubble: "What's your top goal?"
+- 6 selection cards stacked vertically:
+  - Each card: emoji icon left + text label
+  - Options: Professional growth, Staying sharp, Excelling in school, Helping my child learn, Helping my students learn, Something else
+  - Light gray background, subtle border, rounded-xl
+- "Continue" button disabled (light gray)
+
+#### A5. Goal Selection — Selected State
+- "Excelling in school" selected: **light blue/purple background** + **blue border**
+- Mascot changes expression, speech bubble: "Smart move. Future you approves."
+- "Continue" button becomes active (dark charcoal)
+- Non-selected cards remain gray
+
+#### A6. Social Proof
+- Floating illustration cards (tilted, overlapping): microscope, pie chart, code editor, mascot
+- Bold headline centered: "You'll fit right in"
+- Subtitle gray: "Millions of students use Brilliant to hone their problem-solving skills."
+- Dark "Continue" button
+
+#### A7. Level/Skill Selection Grid — Empty
+- Mascot + speech bubble: "What's your programming comfort level?"
+- 2x2 grid of cards, each with:
+  - Colored code snippet at top (green/orange syntax)
+  - Bold level name (Beginner, Novice, Intermediate, Advanced)
+  - Description text below
+  - Light gray bg, rounded corners, subtle border
+- "Continue" disabled
+
+#### A8. Level Selection — Selected State
+- "Intermediate" selected: light blue bg + blue border
+- Mascot reacts: "So we speak the same language(s). Cool."
+- "Continue" active (dark)
+
+#### A9. Value Proposition
+- Progress bar ~50%
+- Mascot with 3D gears/tools illustration
+- Bold headline: "Learn 6x more effectively"
+- Gray paragraph about interactive learning
+- Dark "Continue" button
+
+#### A10. Schedule Selection — Empty
+- Mascot + speech bubble: "How will learning fit into your day?"
+- 4 cards with emoji + bold label + description:
+  - ☀️ Morning routine — during breakfast or my commute
+  - 🍕 Quick break — during lunch or between activities
+  - 🌙 Nightly ritual — after dinner or while in bed
+  - 📺 Another time — in my day
+- "Continue" disabled
+
+#### A11. Schedule Selection — Selected State
+- "Nightly ritual" selected (blue bg + blue border)
+- Mascot changes expression (holding coffee cup), speech bubble: "Source code by starlight. Sounds dreamy."
+- "Continue" active
+
+#### A12. Notification Permission
+- Mascot + speech bubble: "I'll remind you to learn so it becomes a long-term habit."
+- iOS notification permission dialog centered
+- Green arrow pointing up at "Allow" button
+- Dark "Continue" button at bottom
+
+#### A13. Testimonial / Social Proof
+- Mascot on cyan/teal glowing platform
+- Bold headline: "You're on your way!"
+- 5 gold stars ⭐⭐⭐⭐⭐
+- User review quote in gray italic
+- Attribution: "— Joel M."
+- Dark "Continue" button
+
+#### A14. Auth / Sign Up Screen
+- Clean white background
+- Bold headline: "Sign up for free to discover your learning path"
+- Two social buttons side by side (Apple logo, Google G) — rounded pill, light border
+- "OR" divider line
+- Dark charcoal "Continue with email" button, full-width
+- "Existing user? **Sign in**" link at bottom
+
+### B. Home Dashboard (Screens 1, 27-31)
+
+#### B1. Home Dashboard — Blue Theme (Functions)
+- Streak counter top-right (lightning icon + number in rounded pill)
+- Course title "Functions" in bold serif
+- "LEVEL 1" label in blue
+- Large illustration carousel (satellite dish) with pagination dots
+- White rounded card below with exercise list:
+  - "Warm up" with 3D ring icon + mascot badge
+  - "Graphing Solutions" (gray, locked)
+- Blue "Start" button full-width
+- Bottom tab bar: Home (active) | Courses | You
+
+#### B2. Home Dashboard — Purple Theme (Thinking in Code) — Completed Lesson
+- "Thinking in Code" title, "LEVEL 1" in purple
+- Code/drag illustration (purple + yellow)
+- Mascot message: "Nice work today!"
+- "Writing Programs" with checkmark (completed, purple)
+- Purple "Continue course" button
+- Bottom tab bar
+
+#### B3. Home Dashboard — Purple Theme — Next Lesson
+- Same course, "Warm up" completed (checkmark)
+- "Repeating Patterns" active with mascot badge on ring
+- Purple "Start" button
+
+#### B4. Home Dashboard — Orange Theme (Predicting with Probability)
+- Crystal ball illustration (orange)
+- "You're about to level up!" message
+- "From Data to Probabilities" active with mascot badge
+- Orange "Start" button
+
+#### B5. Home Dashboard — Purple Recommended (Programming with Variables)
+- "RECOMMENDED" badge (purple pill) above title
+- 3D printer illustration (purple + yellow)
+- "Writing Programs" active, "Using Variables" locked
+- Purple "Start" button
+
+### C. Course Detail & Lesson Map (Screens 2-5, 26)
+
+#### C1. Course Detail Overview — Blue (Functions)
+- Chevron down top-left, streak counter top-right
+- Course icon (satellite dish) centered
+- Title "Functions" bold serif
+- Description gray: "Supercharge your thinking with the language of algebra."
+- Stats: "45 Lessons 🧩 333 Exercises"
+- LEVEL 1 card with **blue border**: "Relationships and Points"
+- First exercise node "Seeing Solutions" with green mascot badge on ring
+- Scroll down chevron button bottom-left
+
+#### C2. Lesson Map — Active Node with Bottom Sheet (Functions)
+- Course icon small at top-center
+- LEVEL 1 card with blue border
+- "Seeing Solutions" completed (blue filled ring + checkmark)
+- "Graphing Solutions" active (blue ring + green mascot badge floating)
+- Locked nodes below ("Revealing Patterns") in gray
+- **Bottom sheet popup**: exercise title bold + "Start" blue button full-width
+- "Choosing Values" partially visible below
+
+#### C3. Lesson Map — Completed Node with Practice (Functions)
+- Same layout, "Seeing Solutions" completed
+- Bottom sheet: "Seeing Solutions" title + "Practice" blue button + replay icon (⟳)
+- Shows the completed + practice state pattern
+
+#### C4. Course Detail — Orange Theme (Exploring Data Visually)
+- Course icon (notebook/chart)
+- Title "Exploring Data Visually", description
+- Stats: "29 Lessons 🧩 243 Exercises"
+- LEVEL 1 card with **orange border**: "Bar Charts and Pie Charts"
+- First node "Reading Bar Charts" with orange ring (in-progress)
+- Bottom sheet: "Reading Bar Charts" + "Jump here" button
+- Warm peach gradient background at bottom
+
+### D. Lesson Content Flow (Screens 7-9)
+
+#### D1. Lesson Content — Title & Intro
+- X close button top-left, progress bar (green ~25%), lightning icon top-right
+- Bold serif title: "Seeing Solutions"
+- Body text explaining equations
+- Math notation inline: 2y + 5 = x + 5
+- **Colored bar model diagrams**:
+  - Top bar: purple (y, y) + blue (5) with bracket "2y + 5"
+  - Bottom bar: orange (x) + blue (5) with bracket "x + 5"
+- Dark "Continue" button at bottom
+
+#### D2. Lesson Content — Animated Step-by-Step (Step 1)
+- Progress bar advanced (~30%)
+- Explanation text with **bold keywords**
+- Bar models with **specific values** (y=1, x=2, constant=5)
+- Pagination dots (3 steps) + prev/next play buttons
+- Gray track showing full bar width
+- Dark "Continue" button
+
+#### D3. Lesson Content — Animated Step (Step 2)
+- Same layout, values updated (y=2, x=4)
+- Both prev/next buttons active (dark)
+- Bar model proportions change dynamically
+
+### E. Exercise Types (Screens 10-22)
+
+#### E1. Table Selection — Empty
+- Instruction text: "Select the table that represents the solutions..."
+- Math equation: 2y + 5 = x + 5
+- Two data tables side by side with x,y columns
+- Both tables have gray border (unselected)
+- "Start over" link (⟳ icon)
+- "Check" button disabled (light gray)
+
+#### E2. Table Selection — Selected
+- Left table selected: **blue border** highlight
+- "Check" button becomes active (dark charcoal)
+
+#### E3. Table Selection — Correct Answer
+- Correct table: **green/teal border** + green checkmark badge top-right
+- Wrong table: grayed out (faded text, gray header)
+- **Green banner bottom**: confetti emoji 🎊 + "**Correct!**" bold + "✨ +15 XP"
+- Flag icon (report) right side
+- "Why?" button (gray pill) + "Continue" button (green pill)
+
+#### E4. Input Exercise — Empty
+- Instruction: "Enter the value of y that makes this equation true when x = 10"
+- Equation in math notation: 2y + 5 = x + 5
+- Data table showing pattern (x: 2,4,6,8,10 / y: 1,2,3,4,?)
+- Input field: "x = 10  y = [ ]" with empty rounded input box
+- "Start over" link
+- "Check" disabled
+
+#### E5. Input Exercise — With Math Keyboard
+- Same exercise, value "5" entered in input (blue border)
+- **Custom math keyboard** at bottom:
+  - Row 1: +, −, ×, ÷, =, ., (, ), √, □
+  - Row 2: 1-9, 0
+  - Row 3: undo, redo, ←, →, backspace
+  - "Done" link top-right in blue
+
+#### E6. Input Exercise — Filled (Keyboard Dismissed)
+- Value "5" shown in input, keyboard closed
+- "Check" button active (dark)
+
+#### E7. Input Exercise — Correct
+- Value "5" with **green border** + green checkmark badge
+- Green banner: "Correct! +15 XP"
+- "Why?" + "Continue" green buttons
+
+#### E8. Multiple Choice (MCQ) — Pill Options
+- Question: "What is the **total** number of solutions to this equation?"
+- Data table above
+- Rounded pill-shaped options stacked:
+  - "10" — dark border
+  - "100" — dark border
+  - "There are infinitely many solutions." — dark border, wider
+- No "Check" button (auto-submit on selection)
+
+#### E9. Scrollable Data Table — Top
+- Explanation: "Any pair of values where x is twice y is a solution — so there are infinitely many."
+- Scrollable table with **vertical scrollbar** (dark handle on gray track)
+- Table showing values from x=2, y=1 upward
+- Text below: "Tables get cumbersome... Next we'll see a **graphical representation**"
+- Dark "Continue" button
+
+#### E10. Scrollable Data Table — Scrolled
+- Same table scrolled to middle (x≈11000, y≈5500)
+- Scrollbar handle in middle position
+- Demonstrates the "infinite" feel of scrolling
+
+#### E11. Slider Exercise — Initial State
+- Instruction: "**Find a solution.** A solution is a pair of values for x and y..."
+- Equation: 2x + 2 = y + 6
+- Bar models: orange (x, x, 2) vs purple (y) + blue (6)
+- **Two interactive sliders**:
+  - x slider (orange handle): value label "1" in black pill, range 1-7
+  - y slider (purple handle): value label "5" in black pill, range 1-7
+- Bar model widths update with slider values
+- "Check" disabled
+
+#### E12. Slider Exercise — Adjusted
+- Sliders moved: x=3, y=2
+- Bar models widths reflect new values
+- "Check" button active (dark)
+
+#### E13. Slider Exercise — Correct
+- Sliders locked (gray handles, no color)
+- Progress dots advanced (2 of 3 green)
+- Green banner: "Correct! +15 XP"
+- "Why?" + "Continue" green buttons
+
+### F. Rewards & Gamification (Screens 23-25)
+
+#### F1. Lesson Complete
+- White background, centered layout
+- Mascot with **green glow** floating above 3D blue platform ring
+- Checkmark visible on platform
+- Bold serif: "Lesson Complete!"
+- "TOTAL XP" label gray + "**175** ✨" large bold black
+- Dark "Continue" button
+
+#### F2. Streak Charge Earned
+- 3D battery illustration (yellow/green glow, tilted)
+- Bold serif: "You earned a Streak Charge!"
+- Gray subtitle: "Charges save your streak if you miss a day"
+- Dark "Continue" button
+- Pure white background
+
+#### F3. Leaderboard — Welcome to Leagues
+- Shield badge illustration (orange) at top
+- Decorative grid background (faint)
+- Bold: "Welcome to Leagues!"
+- "You just qualified for **Hydrogen League**!"
+- "Keep earning XP to rise the ranks."
+- "**6 days left**"
+- Ranked list (1-5):
+  - Rank badge (colored pill) + avatar circle (letter, colored) + name + XP
+  - Current user row: **green background highlight**
+- "What are leagues?" outlined button
+- Dark "Continue" button
+
+### G. Key Interaction Patterns
+
+#### Selection States
+- **Unselected**: light gray bg (#F9FAFB), subtle gray border (#E5E7EB), rounded-xl
+- **Selected**: light blue/purple bg (#EFF6FF), blue border (#3B82F6), rounded-xl
+- **Correct**: green border (#10B981), green checkmark badge top-right
+- **Incorrect/Disabled**: gray text, faded appearance
+
+#### Button States
+- **Primary active**: dark charcoal (#1F2937), white text, rounded-xl, full-width
+- **Primary disabled**: light gray (#E5E7EB), gray text, same shape
+- **Success/Continue**: green (#10B981), white text
+- **Course-themed**: matches course color (blue/purple/orange)
+
+#### Progress Bar
+- Green fill (#10B981) on gray track (#E5E7EB)
+- Animated width transition
+- Always visible at top during exercises/onboarding
+- Sometimes shows section dots (green = completed, gray = remaining)
+
+#### Bottom Sheet Pattern
+- White card with rounded-t-xl, subtle shadow
+- Exercise/lesson title bold centered
+- Action button full-width (colored per course theme)
+- Optional replay icon button (⟳)
+- Slides up from bottom
+
+#### Mascot Reactions
+- Green diamond-shaped character with face
+- Changes expression based on context (smiling, holding props like coffee cup)
+- Always accompanied by yellow speech bubble with witty message
+- Speech bubble: #FEF9C3 bg, #FDE047 border, rounded with tail pointing to mascot
