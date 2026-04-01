@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@theme inline {
+  /* Fonts */
+  --font-sans: var(--font-inter);
+  --font-arabic: var(--font-amiri);
+
+  /* Primary (Green = action, per Brilliant design) */
+  --color-primary: #10B981;
+  --color-primary-dark: #059669;
+  --color-primary-light: #D1FAE5;
+
+  /* Charcoal */
+  --color-charcoal: #1F2937;
+  --color-charcoal-light: #374151;
+
+  /* Islamic accent */
+  --color-gold: #D4AF37;
+  --color-gold-light: #F5E6B8;
+
+  /* Background (Dark mode first) */
+  --color-background: #0A0A0F;
+  --color-surface: #141420;
+  --color-surface-warm: #1A1A2E;
+  --color-surface-card: #1E1E30;
+
+  /* Speech bubbles (mascot) */
+  --color-speech: #2A2A1E;
+  --color-speech-border: #D4AF37;
+
+  /* Borders */
+  --color-border: #2A2A3E;
+  --color-border-light: #1F1F32;
+
+  /* Text */
+  --color-foreground: #F1F1F3;
+  --color-text-primary: #F1F1F3;
+  --color-text-secondary: #9CA3AF;
+  --color-text-muted: #6B7280;
+
+  /* Feedback */
+  --color-correct: #10B981;
+  --color-correct-bg: #064E3B;
+  --color-correct-text: #A7F3D0;
+  --color-incorrect: #EF4444;
+  --color-incorrect-bg: #7F1D1D;
+  --color-incorrect-text: #FCA5A5;
+
+  /* Disabled */
+  --color-disabled: #2A2A3E;
+  --color-disabled-text: #4B5563;
+
+  /* Premium */
+  --color-premium: #8B5CF6;
+  --color-premium-light: #C4B5FD;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Border radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+}
+
+/* Arabic text utilities */
+.arabic {
+  font-family: var(--font-arabic);
+  direction: rtl;
+  text-align: right;
+  line-height: 2;
+}
+
+/* Scrollbar styling (dark) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+/* Selection */
+::selection {
+  background: var(--color-primary);
+  color: var(--color-background);
+}
