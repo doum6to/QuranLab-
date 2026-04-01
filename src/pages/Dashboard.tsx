@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useProgress } from '../hooks/useProgress';
 import { parties, getAllLessons } from '../data/lessons';
-import type { Lesson } from '../types';
+import type { Lesson, Partie } from '../types';
 
 // ── Helper: find current active lesson ──
 function useCurrentLesson() {
@@ -308,7 +308,7 @@ function MobileCourseCard({
         border: '1px solid #F0E8D8',
         background: '#FFFBF0',
         padding: '28px 24px',
-        minHeight: 480,
+        minHeight: '70vh',
       }}
     >
       {/* Block 1: Header */}
@@ -378,6 +378,57 @@ function MobileCourseCard({
   );
 }
 
+// ── Locked Partie Card (for mobile carousel) ──
+function LockedPartieCard({ partie }: { partie: Partie }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center"
+      style={{
+        borderRadius: 20,
+        border: '1px solid #E8E8E8',
+        background: '#F8F8F8',
+        padding: '28px 24px',
+        minHeight: '70vh',
+      }}
+    >
+      {/* Lock icon */}
+      <div
+        className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
+        style={{ background: '#E5E5E5' }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="#999">
+          <path d="M12 2C9.24 2 7 4.24 7 7v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2h-1V7c0-2.76-2.24-5-5-5zm3 8H9V7c0-1.66 1.34-3 3-3s3 1.34 3 3v3z" />
+        </svg>
+      </div>
+
+      {/* Title */}
+      <h2 className="text-xl font-bold text-gray-400 mb-1 text-center">
+        Partie {partie.id}
+      </h2>
+      <p className="text-base font-semibold text-gray-500 mb-2 text-center">
+        {partie.title}
+      </p>
+      <p className="text-sm text-gray-400 text-center mb-6">
+        {partie.description}
+      </p>
+
+      {/* Coverage badge */}
+      <div
+        className="px-4 py-2 rounded-full text-sm font-semibold"
+        style={{ background: '#EEEEEE', color: '#999' }}
+      >
+        {partie.coverage}% du Coran
+      </div>
+
+      <div className="mt-6">
+        <p className="text-xs text-gray-400 uppercase tracking-wider font-bold">
+          Bientôt disponible
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Dashboard ──
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -388,6 +439,11 @@ export default function Dashboard() {
 
   // Selected lesson state — defaults to the auto-detected current lesson
   const [selectedLesson, setSelectedLesson] = useState<Lesson>(currentLesson);
+
+  // Mobile carousel includes locked parties after lessons
+  const lockedParties = useMemo(() => parties.filter((p) => p.locked), []);
+  const mobileItemCount = allLessons.length + lockedParties.length;
+  const [mobileIndex, setMobileIndex] = useState(0);
 
   const exerciseRoutes: Record<string, string> = {
     discover: 'learn',
@@ -418,11 +474,10 @@ export default function Dashboard() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isScrolling = useRef(false);
 
-  // Scroll to selected lesson when changed via dot/thumbnail click
+  // Scroll to selected lesson when changed via thumbnail click (desktop)
   useEffect(() => {
     if (scrollRef.current && !isScrolling.current) {
-      const index = allLessons.findIndex((l) => l.id === selectedLesson.id);
-      const child = scrollRef.current.children[index] as HTMLElement;
+      const child = scrollRef.current.children[mobileIndex] as HTMLElement;
       if (child) {
         scrollRef.current.scrollTo({
           left: child.offsetLeft - (scrollRef.current.clientWidth - child.offsetWidth) / 2,
@@ -430,7 +485,7 @@ export default function Dashboard() {
         });
       }
     }
-  }, [selectedLesson.id, allLessons]);
+  }, [mobileIndex]);
 
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
@@ -451,13 +506,17 @@ export default function Dashboard() {
           closestIndex = i;
         }
       });
-      const clamped = Math.max(0, Math.min(closestIndex, allLessons.length - 1));
-      if (allLessons[clamped] && allLessons[clamped].id !== selectedLesson.id) {
-        setSelectedLesson(allLessons[clamped]);
+      const clamped = Math.max(0, Math.min(closestIndex, mobileItemCount - 1));
+      if (clamped !== mobileIndex) {
+        setMobileIndex(clamped);
+        // Also update selectedLesson if it's a lesson card
+        if (clamped < allLessons.length && allLessons[clamped].id !== selectedLesson.id) {
+          setSelectedLesson(allLessons[clamped]);
+        }
       }
       isScrolling.current = false;
     }, 100);
-  }, [allLessons, selectedLesson.id]);
+  }, [allLessons, selectedLesson.id, mobileIndex, mobileItemCount]);
 
   return (
     <div className="min-h-dvh bg-white flex flex-col">
@@ -595,7 +654,7 @@ export default function Dashboard() {
               >
                 {allLessons.map((lesson) => (
                   <div
-                    key={lesson.id}
+                    key={`lesson-${lesson.id}`}
                     className="snap-center shrink-0"
                     style={{ width: '85vw', maxWidth: 510 }}
                   >
@@ -606,20 +665,32 @@ export default function Dashboard() {
                     />
                   </div>
                 ))}
+                {lockedParties.map((partie) => (
+                  <div
+                    key={`partie-${partie.id}`}
+                    className="snap-center shrink-0"
+                    style={{ width: '85vw', maxWidth: 510 }}
+                  >
+                    <LockedPartieCard partie={partie} />
+                  </div>
+                ))}
               </div>
 
               {/* Mobile dot indicators */}
               <div className="flex gap-2 justify-center mt-5">
-                {allLessons.map((lesson) => (
+                {Array.from({ length: mobileItemCount }).map((_, i) => (
                   <button
-                    key={lesson.id}
-                    onClick={() => setSelectedLesson(lesson)}
+                    key={i}
+                    onClick={() => {
+                      setMobileIndex(i);
+                      if (i < allLessons.length) setSelectedLesson(allLessons[i]);
+                    }}
                     className="rounded-full transition-all"
                     style={{
-                      width: lesson.id === selectedLesson.id ? 10 : 8,
-                      height: lesson.id === selectedLesson.id ? 10 : 8,
-                      background: lesson.id === selectedLesson.id ? '#F7C325' : '#D9D9D9',
-                      border: lesson.id === selectedLesson.id ? '2px solid #E8B30E' : 'none',
+                      width: i === mobileIndex ? 10 : 8,
+                      height: i === mobileIndex ? 10 : 8,
+                      background: i === mobileIndex ? '#F7C325' : '#D9D9D9',
+                      border: i === mobileIndex ? '2px solid #E8B30E' : 'none',
                     }}
                   />
                 ))}
