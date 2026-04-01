@@ -1,17 +1,4 @@
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-
-export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect('/dashboard');
-  }
-
-  // Landing page for unauthenticated users
+export default function HomePage() {
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-6 text-center">
       <div className="mb-8">
@@ -22,22 +9,22 @@ export default async function HomePage() {
       </div>
 
       <p className="max-w-md text-lg text-text-secondary mb-8">
-        Apprends l'arabe coranique de maniere interactive. Progression
+        Apprends l&apos;arabe coranique de maniere interactive. Progression
         intelligente, exercices immersifs, zero punition.
       </p>
 
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <a
-          href="/signup"
+          href="/dashboard"
           className="block w-full rounded-lg bg-primary py-3.5 text-center text-lg font-semibold text-white transition-colors hover:bg-primary-dark"
         >
           Commencer gratuitement
         </a>
         <a
-          href="/login"
+          href="/vocabulary"
           className="block w-full rounded-lg border border-border bg-surface py-3.5 text-center text-lg font-medium text-text-secondary transition-colors hover:bg-surface-warm"
         >
-          Se connecter
+          Explorer le vocabulaire
         </a>
       </div>
 
@@ -52,7 +39,7 @@ export default async function HomePage() {
         </div>
         <div>
           <p className="text-2xl font-bold text-premium">6</p>
-          <p className="text-xs text-text-muted">Types d'exercices</p>
+          <p className="text-xs text-text-muted">Types d&apos;exercices</p>
         </div>
       </div>
     </div>

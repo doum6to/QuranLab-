@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { createClient } from '@/lib/supabase/client';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
@@ -21,6 +21,13 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
+      if (!isSupabaseConfigured()) {
+        setUser({ name: 'Apprenant', email: 'demo@quranlab.app' });
+        setStats({ streakCount: 3, totalXp: 120, lastActive: '', subscriptionTier: 'FREE' });
+        setLoading(false);
+        return;
+      }
+
       const {
         data: { user: authUser },
       } = await supabase.auth.getUser();
@@ -54,8 +61,10 @@ export default function ProfilePage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
+    if (isSupabaseConfigured()) {
+      await supabase.auth.signOut();
+    }
+    router.push('/');
   };
 
   if (loading) {
@@ -136,11 +145,11 @@ export default function ProfilePage() {
             </h3>
           </div>
           <p className="text-sm text-text-secondary mb-3">
-            Debloquez toutes les lecons, le suivi de progression et l'acces
+            Debloquez toutes les lecons, le suivi de progression et l&apos;acces
             hors-ligne.
           </p>
           <button className="w-full rounded-lg bg-premium py-3 text-sm font-semibold text-white active:opacity-90">
-            Commencer l'essai gratuit
+            Commencer l&apos;essai gratuit
           </button>
         </motion.div>
       )}
