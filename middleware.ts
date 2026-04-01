@@ -35,10 +35,13 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/signup');
   const isHomePage = request.nextUrl.pathname === '/';
-  const isAppPage = request.nextUrl.pathname.startsWith('/dashboard') ||
+  const isDemoPage = request.nextUrl.pathname === '/lesson/demo';
+  const isAppPage = !isDemoPage && (
+    request.nextUrl.pathname.startsWith('/dashboard') ||
     request.nextUrl.pathname.startsWith('/lesson') ||
     request.nextUrl.pathname.startsWith('/profile') ||
-    request.nextUrl.pathname.startsWith('/vocabulary');
+    request.nextUrl.pathname.startsWith('/vocabulary')
+  );
 
   if (!user && isAppPage) {
     const url = request.nextUrl.clone();
